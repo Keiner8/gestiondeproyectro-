@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SENA Mapeo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .logo-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #000;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .logo p {
+            color: #000;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #000;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .password-input-group {
+            position: relative;
+        }
+        
+        .password-input-group input {
+            width: 100%;
+            padding-right: 45px;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            color: #667eea;
+            transition: color 0.3s;
+        }
+        
+        .toggle-password:hover {
+            color: #764ba2;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            display: none;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+         <img src="/img/logo2.png" alt="Logo 2" class="logo-top-right">
+         <h1 style="text-align: center; color: #000; margin-bottom: 30px; font-size: 24px;">Iniciar Sesión</h1>
+         
+         <div class="error-message" id="errorMessage"></div>
+         <div class="success-message" id="successMessage"></div>
+         
+         <form id="loginForm" onsubmit="handleLogin(event)">
+             <div class="form-group">
+                 <label for="correo">Correo Electrónico</label>
+                 <input type="email" id="correo" name="correo" placeholder="correo@example.com" required>
+             </div>
+             
+             <div class="form-group">
+                 <label for="password">Contraseña</label>
+                 <div class="password-input-group">
+                     <input type="password" id="password" name="password" placeholder="••••••••" required>
+                     <button type="button" class="toggle-password" onclick="togglePassword('password')">👁️</button>
+                 </div>
+             </div>
+             
+             <button type="submit" class="btn-login">
+                 Ingresar
+                 <span class="spinner" id="spinner"></span>
+             </button>
+             
+             <p style="text-align: center; margin-top: 20px; color: #000;">
+                 ¿No tienes cuenta? <a href="/register" style="color: #667eea; text-decoration: none; font-weight: 600;">Registrate</a>
+             </p>
+         </form>
+         
+
+     </div>
+     
+     <script>
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = event.target.closest('.toggle-password');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            } else {
+                input.type = 'password';
+                button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+            }
+        }
+        
+        // Limpiar sesión anterior cuando entra a login
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 Página de login cargada - limpiando sesión anterior');
+            
+            // Limpiar token y datos de sesión
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('usuarioId');
+            localStorage.removeItem('usuarioNombre');
+            localStorage.removeItem('usuarioRol');
+            
+            // Limpiar cookies de JWT
+            document.cookie = "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            
+            // Redirigir si intenta acceder con token activo (doble seguridad)
+            if (window.location.href.includes('/login') && localStorage.getItem('jwtToken')) {
+                console.warn('⚠️ Token detectado en login - limpiando');
+                location.reload();
+            }
+        });
+         
+         async function handleLogin(event) {
+            event.preventDefault();
+            
+            const correo = document.getElementById('correo').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const spinner = document.getElementById('spinner');
+            const btnLogin = document.querySelector('.btn-login');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            spinner.style.display = 'inline-block';
+            btnLogin.disabled = true;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ correo, password })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                
+                const data = await response.json();
+                
+                // Guardar token en cookie (se envía automáticamente en todas las solicitudes)
+                // Configurar cookie con duración de 24 horas
+                const expirationDate = new Date();
+                expirationDate.setTime(expirationDate.getTime() + (24 * 60 * 60 * 1000)); // 24 horas
+                const expires = "expires=" + expirationDate.toUTCString();
+                document.cookie = "jwtToken=" + data.token + ";" + expires + ";path=/";
+                
+                // Guardar también en localStorage para acceso desde JavaScript
+                localStorage.setItem('jwtToken', data.token);
+                localStorage.setItem('usuarioId', data.usuarioId);
+                localStorage.setItem('usuarioNombre', data.nombre);
+                localStorage.setItem('usuarioRol', data.rol);
+                
+                console.log('Login exitoso:');
+                console.log('Token:', data.token);
+                console.log('Rol guardado:', data.rol);
+                console.log('Dashboard:', data.dashboard);
+                console.log('Rol desde localStorage:', localStorage.getItem('usuarioRol'));
+                
+                // Mostrar mensaje de éxito
+                successDiv.textContent = `¡Bienvenido ${data.nombre}!`;
+                successDiv.style.display = 'block';
+                
+                // Redirigir al dashboard con pequeño delay para asegurar que la cookie se guarde
+                console.log('Redirigiendo a:', data.dashboard);
+                setTimeout(() => {
+                    window.location.replace(data.dashboard);
+                }, 500);
+                
+            } catch (error) {
+                errorDiv.textContent = 'Error al iniciar sesión: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                spinner.style.display = 'none';
+                btnLogin.disabled = false;
+            }
+        }
+        
+
+    </script>
+</body>
+</html>

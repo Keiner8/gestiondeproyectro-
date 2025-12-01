@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENA - Sistema de Gestión Educativa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/img/2148430814.jpg?v=1') center/cover no-repeat fixed;
+            position: relative;
+        }
+        
+        header, main, footer {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .logo img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .header-actions a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        
+        .header-actions .btn-login {
+            background: #667eea;
+        }
+        
+        .header-actions .btn-login:hover {
+            background: #5568d3;
+        }
+        
+        .header-actions .btn-register {
+            border: 2px solid white;
+            color: white;
+        }
+        
+        .header-actions .btn-register:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        .welcome-card {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .welcome-card h1 {
+            color: #222;
+            font-size: 28px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+        
+        .welcome-card p {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .btn-start {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-block;
+            text-decoration: none;
+            margin-bottom: 35px;
+        }
+        
+        .btn-start:hover {
+            background: #333;
+        }
+        
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature {
+            background: #f5f5f5;
+            padding: 25px 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feature:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 45px;
+            margin-bottom: 12px;
+        }
+        
+        .feature-title {
+            color: #222;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .feature-desc {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .welcome-card {
+                padding: 30px 20px;
+            }
+            
+            .welcome-card h1 {
+                font-size: 24px;
+            }
+            
+            .welcome-card p {
+                font-size: 14px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <img src="/img/logo1.png" alt="Logo SENA">
+        </div>
+        <div class="header-actions">
+            <a href="/login" class="btn-login">Iniciar Sesión</a>
+            <a href="/register" class="btn-register">Registrarse</a>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main>
+        <div class="welcome-card">
+            <h1>Bienvenido al Sistema de Gestión SENA</h1>
+            <p>Plataforma para la gestión académica del SENA: aprendices, instructores y administradores trabajan juntos para facilitar la formación, seguimiento de proyectos y evaluaciones.</p>
+            
+            <a href="/login" class="btn-start">Empezar</a>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">👨‍🎓</div>
+                    <div class="feature-title">Aprendices</div>
+                    <div class="feature-desc">Gestiona tu perfil y proyectos</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">👨‍🏫</div>
+                    <div class="feature-title">Instructores</div>
+                    <div class="feature-desc">Evalúa y supervisa aprendices</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚙️</div>
+                    <div class="feature-title">Administración</div>
+                    <div class="feature-desc">Gestiona usuarios y fichas</div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Sistema de Gestión SENA. Todos los derechos reservados.</p>
+    </footer>
+    
+
+</body>
+</html>

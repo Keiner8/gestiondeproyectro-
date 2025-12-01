@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse - SENA Mapeo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .register-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .logo-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #000;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .capitalize {
+            text-transform: capitalize;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-register:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-register:active {
+            transform: translateY(0);
+        }
+        
+        .password-input-group {
+            position: relative;
+        }
+        
+        .password-input-group input {
+            width: 100%;
+            padding-right: 45px;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            color: #667eea;
+            transition: color 0.3s;
+        }
+        
+        .toggle-password:hover {
+            color: #764ba2;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            display: none;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <img src="/img/logo2.png" alt="Logo 2" class="logo-top-right">
+        <h1 style="text-align: center; color: #000; margin-bottom: 30px; font-size: 24px;">Registrarse</h1>
+        
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; margin-bottom: 12px; color: #000; font-weight: 500; text-align: center;">¿Qué tipo de usuario eres?</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="role-btn" data-role="3" style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s;" onclick="selectRole(3)">
+                    👨‍🎓 Aprendiz
+                </button>
+                <button type="button" class="role-btn" data-role="2" style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s;" onclick="selectRole(2)">
+                    👨‍🏫 Instructor
+                </button>
+                <button type="button" class="role-btn" data-role="1" style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s;" onclick="selectRole(1)">
+                    👨‍💼 Administrador
+                </button>
+            </div>
+            <input type="hidden" id="rolId" name="rolId" value="">
+        </div>
+        
+        <form id="registerForm" onsubmit="handleRegister(event)" style="max-height: 500px; overflow-y: auto;">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required class="capitalize">
+            </div>
+            
+            <div class="form-group">
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" name="apellido" placeholder="Tu apellido" required class="capitalize">
+            </div>
+            
+            <div class="form-group">
+                <label for="correo">Correo Electrónico</label>
+                <input type="email" id="correo" name="correo" placeholder="correo@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipoDocumento">Tipo de Documento</label>
+                <select id="tipoDocumento" name="tipoDocumento" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    <option value="">Selecciona un tipo</option>
+                    <option value="CC">Cédula de Ciudadanía</option>
+                    <option value="TI">Tarjeta de Identidad</option>
+                    <option value="CE">Cédula de Extranjería</option>
+                    <option value="Pasaporte">Pasaporte</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="numeroDocumento">Número de Documento</label>
+                <input type="text" id="numeroDocumento" name="numeroDocumento" placeholder="1234567890" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="password-input-group">
+                    <input type="password" id="password" name="password" placeholder="••••••••" required onkeyup="validatePassword()">
+                    <button type="button" class="toggle-password" onclick="togglePassword('password')">👁️</button>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px; font-size: 13px;">
+                    <p style="margin-bottom: 10px; font-weight: 600; color: #000;">Requisitos de contraseña:</p>
+                    <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                        <span id="req-length" style="display: inline-block; width: 16px; height: 16px; margin-right: 8px; border-radius: 50%; background: #ddd; color: white; text-align: center; line-height: 16px; font-size: 10px; font-weight: bold;">✗</span>
+                        <span style="color: #333; font-size: 12px;">Al menos 8 caracteres</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                        <span id="req-upper" style="display: inline-block; width: 16px; height: 16px; margin-right: 8px; border-radius: 50%; background: #ddd; color: white; text-align: center; line-height: 16px; font-size: 10px; font-weight: bold;">✗</span>
+                        <span style="color: #333; font-size: 12px;">Letra mayúscula (A-Z)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                        <span id="req-lower" style="display: inline-block; width: 16px; height: 16px; margin-right: 8px; border-radius: 50%; background: #ddd; color: white; text-align: center; line-height: 16px; font-size: 10px; font-weight: bold;">✗</span>
+                        <span style="color: #333; font-size: 12px;">Letra minúscula (a-z)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                        <span id="req-number" style="display: inline-block; width: 16px; height: 16px; margin-right: 8px; border-radius: 50%; background: #ddd; color: white; text-align: center; line-height: 16px; font-size: 10px; font-weight: bold;">✗</span>
+                        <span style="color: #333; font-size: 12px;">Número (0-9)</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span id="req-special" style="display: inline-block; width: 16px; height: 16px; margin-right: 8px; border-radius: 50%; background: #ddd; color: white; text-align: center; line-height: 16px; font-size: 10px; font-weight: bold;">✗</span>
+                        <span style="color: #333; font-size: 12px;">Carácter especial (!@#$%^&*)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="passwordConfirm">Confirmar Contraseña</label>
+                <div class="password-input-group">
+                    <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="••••••••" required>
+                    <button type="button" class="toggle-password" onclick="togglePassword('passwordConfirm')">👁️</button>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-register">
+                Registrarse
+                <span class="spinner" id="spinner"></span>
+            </button>
+            
+            <p style="text-align: center; margin-top: 20px; color: #000;">
+                ¿Ya tienes cuenta? <a href="/login" style="color: #667eea; text-decoration: none; font-weight: 600;">Inicia sesión</a>
+            </p>
+        </form>
+    </div>
+    
+    <script>
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = event.target.closest('.toggle-password');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            } else {
+                input.type = 'password';
+                button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+            }
+        }
+        
+        function capitalizeFirstLetter(string) {
+            if (!string) return '';
+            return string.trim().toLowerCase().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+        
+        function validatePassword() {
+            const password = document.getElementById('password').value;
+            
+            // Validaciones
+            const hasLength = password.length >= 8;
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            
+            // Actualizar indicadores
+            updateRequirement('req-length', hasLength);
+            updateRequirement('req-upper', hasUpper);
+            updateRequirement('req-lower', hasLower);
+            updateRequirement('req-number', hasNumber);
+            updateRequirement('req-special', hasSpecial);
+        }
+        
+        function updateRequirement(elementId, isValid) {
+            const element = document.getElementById(elementId);
+            if (isValid) {
+                element.textContent = '✓';
+                element.style.background = '#28a745';
+            } else {
+                element.textContent = '✗';
+                element.style.background = '#dc3545';
+            }
+        }
+        
+        function selectRole(roleId) {
+            document.getElementById('rolId').value = roleId;
+            
+            // Resaltar el botón seleccionado
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.style.borderColor = '#ddd';
+                btn.style.background = 'white';
+                btn.style.color = '#000';
+            });
+            
+            const selectedBtn = document.querySelector(`[data-role="${roleId}"]`);
+            selectedBtn.style.borderColor = '#667eea';
+            selectedBtn.style.background = '#667eea';
+            selectedBtn.style.color = 'white';
+        }
+        
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const nombre = capitalizeFirstLetter(document.getElementById('nombre').value);
+            const apellido = capitalizeFirstLetter(document.getElementById('apellido').value);
+            const correo = document.getElementById('correo').value;
+            const tipoDocumento = document.getElementById('tipoDocumento').value;
+            const numeroDocumento = document.getElementById('numeroDocumento').value;
+            const rolId = document.getElementById('rolId').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const spinner = document.getElementById('spinner');
+            const btnRegister = document.querySelector('.btn-register');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!rolId || rolId === '') {
+                errorDiv.textContent = 'Debes seleccionar un tipo de usuario (Aprendiz o Instructor)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Validar requisitos de contraseña
+            const hasLength = password.length >= 8;
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            
+            if (!hasLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+                errorDiv.textContent = 'La contraseña no cumple con todos los requisitos requeridos';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (password !== passwordConfirm) {
+                errorDiv.textContent = 'Las contraseñas no coinciden';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            spinner.style.display = 'inline-block';
+            btnRegister.disabled = true;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        nombre, 
+                        apellido,
+                        correo, 
+                        tipoDocumento,
+                        numeroDocumento,
+                        rolId: parseInt(rolId),
+                        password 
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                
+                successDiv.textContent = '¡Registro exitoso! Redirigiendo a inicio de sesión...';
+                successDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+                
+            } catch (error) {
+                errorDiv.textContent = 'Error al registrarse: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                spinner.style.display = 'none';
+                btnRegister.disabled = false;
+            }
+        }
+        
+
+    </script>
+</body>
+</html>

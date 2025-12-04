@@ -925,3 +925,78 @@ function previewFoto(event) {
         reader.readAsDataURL(file);
     }
 }
+
+function previewFotoModal(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validar tamaño
+        if (file.size > 5 * 1024 * 1024) {
+            alert('El archivo es muy grande. Máximo 5MB.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('preview-img');
+            const previewInitials = document.getElementById('preview-initials');
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            previewInitials.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function guardarFotoPerfil(event) {
+    event.preventDefault();
+    
+    const file = document.getElementById('foto-archivo').files[0];
+    if (!file) {
+        alert('Por favor selecciona una foto');
+        return;
+    }
+    
+    const usuarioId = localStorage.getItem('usuarioId');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('usuarioId', usuarioId);
+    
+    try {
+        const response = await fetch(`/api/usuarios/${usuarioId}/foto`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Mostrar la foto en el avatar
+            const avatarImg = document.getElementById('user-avatar-img');
+            const avatarInitials = document.getElementById('user-initials');
+            
+            if (result.fotoPerfil) {
+                avatarImg.src = result.fotoPerfil;
+                avatarImg.style.display = 'block';
+                avatarInitials.style.display = 'none';
+            }
+            
+            alert('Foto actualizada correctamente');
+            closeModal('modal-editar-foto-perfil');
+            
+            // Limpiar el input
+            document.getElementById('foto-archivo').value = '';
+            document.getElementById('preview-img').src = '';
+            document.getElementById('preview-img').style.display = 'none';
+            document.getElementById('preview-initials').style.display = 'block';
+        } else {
+            const error = await response.json().catch(() => ({}));
+            alert('Error al guardar la foto: ' + (error.message || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar la foto');
+    }
+}

@@ -51,6 +51,7 @@ public class SecurityConfig {
                     .requestMatchers("/", "/index.html", "/welcome", "/css/**", "/js/**", "/img/**", "/static/**").permitAll()
                     .requestMatchers("/login", "/register", "/api/auth/**").permitAll()
                     .requestMatchers("/favicon.ico", "/.well-known/**").permitAll()
+                    .requestMatchers("/dashboard/**").permitAll()
                     // Require authentication for all other endpoints
                     .anyRequest().authenticated()
                 )

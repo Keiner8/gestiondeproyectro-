@@ -71,6 +71,18 @@ function obtenerDatosCompletos(usuarioId) {
                     initialsElement.textContent = iniciales;
                 }
                 
+                // Si existe foto de perfil, mostrarla
+                if (usuario.fotoPerfil) {
+                    const avatarImg = document.getElementById('user-avatar-img');
+                    const avatarInitials = document.getElementById('user-initials');
+                    if (avatarImg && avatarInitials) {
+                        avatarImg.src = usuario.fotoPerfil;
+                        avatarImg.style.display = 'block';
+                        avatarInitials.style.display = 'none';
+                    }
+                    console.log('✓ Foto de perfil actualizada en header');
+                }
+                
                 console.log('✓ Header actualizado con datos completos:', nombreCompleto);
             }
         })

@@ -38,6 +38,25 @@ function goToSection(sectionId) {
     if (activeSection) {
         activeSection.classList.add('active');
     }
+    
+    // Cargar datos de reportes cuando se navega a ellos
+    switch(sectionId) {
+        case 'reporte-usuarios':
+            if (typeof cargarReporteUsuarios === 'function') cargarReporteUsuarios();
+            break;
+        case 'reporte-fichas':
+            if (typeof cargarReporteFichas === 'function') cargarReporteFichas();
+            break;
+        case 'reporte-instructores':
+            if (typeof cargarReporteInstructores === 'function') cargarReporteInstructores();
+            break;
+        case 'reporte-trimestres':
+            if (typeof cargarReporteTrimestres === 'function') cargarReporteTrimestres();
+            break;
+        case 'reporte-proyectos':
+            if (typeof cargarReporteProyectos === 'function') cargarReporteProyectos();
+            break;
+    }
 }
 
 // ============================================================

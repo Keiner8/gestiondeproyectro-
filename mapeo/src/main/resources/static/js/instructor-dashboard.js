@@ -595,6 +595,80 @@ function previewFoto(event) {
     }
 }
 
+function previewFotoModal(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validar tamaño
+        if (file.size > 5 * 1024 * 1024) {
+            alert('El archivo es muy grande. Máximo 5MB.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('preview-img');
+            const previewInitials = document.getElementById('preview-initials');
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            previewInitials.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function guardarFotoPerfil(event) {
+    event.preventDefault();
+    
+    const file = document.getElementById('foto-archivo').files[0];
+    if (!file) {
+        alert('Por favor selecciona una foto');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('usuarioId', instructorData.usuario.id);
+    
+    try {
+        const response = await fetch(`${API_BASE}/usuarios/${instructorData.usuario.id}/foto`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Mostrar la foto en el avatar
+            const avatarImg = document.getElementById('user-avatar-img');
+            const avatarInitials = document.getElementById('user-initials');
+            
+            if (result.fotoPerfil) {
+                avatarImg.src = result.fotoPerfil;
+                avatarImg.style.display = 'block';
+                avatarInitials.style.display = 'none';
+            }
+            
+            alert('Foto actualizada correctamente');
+            closeModal('modal-editar-foto-perfil');
+            
+            // Limpiar el input
+            document.getElementById('foto-archivo').value = '';
+            document.getElementById('preview-img').src = '';
+            document.getElementById('preview-img').style.display = 'none';
+            document.getElementById('preview-initials').style.display = 'block';
+        } else {
+            const error = await response.json().catch(() => ({}));
+            alert('Error al guardar la foto: ' + (error.message || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar la foto');
+    }
+}
+
 // ============================================================
 // CALIFICAR GAES
 // ============================================================
@@ -621,77 +695,144 @@ function updateGaesCalificarList() {
     const list = document.getElementById('gaes-calificar-list');
     if (!list) return;
     
-    list.innerHTML = '';
+    list.innerHTML = '<p class="empty-state">Cargando GAES...</p>';
     
-    // Obtener todos los GAES de los aprendices de la ficha
-    let todosGaes = new Map();
-    
-    if (instructorData.fichas && instructorData.fichas.length > 0) {
-        instructorData.fichas.forEach(ficha => {
-            if (ficha.aprendices && ficha.aprendices.length > 0) {
-                ficha.aprendices.forEach(aprendiz => {
-                    if (aprendiz.gaes) {
-                        const gaesId = aprendiz.gaes.id;
-                        if (!todosGaes.has(gaesId)) {
-                            todosGaes.set(gaesId, {
-                                gaesId: aprendiz.gaes.id,
-                                gaesNombre: aprendiz.gaes.nombre,
-                                fichaId: ficha.id,
-                                fichaCodigoFicha: ficha.codigoFicha,
-                                fichaProgramaFormacion: ficha.programaFormacion,
-                                integrantes: aprendiz.gaes.integrantes?.length || 0
-                            });
-                        }
-                    }
-                });
-            }
-        });
-    }
-    
-    const gaesArray = Array.from(todosGaes.values());
-    
-    if (gaesArray.length === 0) {
-        list.innerHTML = '<p class="empty-state">No hay GAES para calificar</p>';
+    // Obtener GAES directamente de la API
+    if (!instructorData.fichas || instructorData.fichas.length === 0) {
+        list.innerHTML = '<p class="empty-state">No hay fichas asignadas</p>';
         return;
     }
     
-    let html = `
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>GAES</th>
-                    <th>Integrantes</th>
-                    <th>Ficha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    const fichaId = instructorData.fichas[0]?.id;
+    if (!fichaId) {
+        list.innerHTML = '<p class="empty-state">No hay ficha asignada</p>';
+        return;
+    }
     
-    gaesArray.forEach(gaes => {
-        html += `
-            <tr>
-                <td><strong>${gaes.gaesNombre}</strong></td>
-                <td>${gaes.integrantes}</td>
-                <td>
-                    <div>${gaes.fichaCodigoFicha}</div>
-                    <small>${gaes.fichaProgramaFormacion}</small>
-                </td>
-                <td>
-                    <button class="btn-primary" onclick="abrirCalificacionGaes(${gaes.gaesId})">
-                        Calificar
-                    </button>
-                </td>
-            </tr>
+    // Obtener GAES de la ficha y aprendices
+    Promise.all([
+        fetchWithAuth(`${API_BASE}/gaes?fichaId=${fichaId}`).then(r => r.json()),
+        fetchWithAuth(`${API_BASE}/aprendices`).then(r => r.json())
+    ])
+    .then(([gaesArray, aprendices]) => {
+        if (!Array.isArray(gaesArray) || gaesArray.length === 0) {
+            list.innerHTML = '<p class="empty-state">No hay GAES para calificar</p>';
+            return;
+        }
+        
+        let html = `
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>GAES</th>
+                        <th>Ficha</th>
+                        <th>Integrantes</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
         `;
+        
+        gaesArray.forEach(gaes => {
+            // Contar aprendices que pertenecen a este GAES
+            const integrantesGaes = aprendices.filter(a => a.gaesId === gaes.id);
+            const cantidadIntegrantes = integrantesGaes.length;
+            const fichaCodigoFicha = instructorData.fichas[0]?.codigoFicha || 'N/A';
+            const fichaProgramaFormacion = instructorData.fichas[0]?.programaFormacion || '';
+            
+            html += `
+                <tr>
+                    <td><strong>${gaes.nombre || 'Sin nombre'}</strong></td>
+                    <td>
+                        <div>${fichaCodigoFicha}</div>
+                        <small>${fichaProgramaFormacion}</small>
+                    </td>
+                    <td>
+                        <button class="btn-secondary" onclick="verIntegrantesGaes(${gaes.id}, '${gaes.nombre}')">
+                            Ver Integrantes (${cantidadIntegrantes})
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn-primary" onclick="abrirCalificacionGaes(${gaes.id})">
+                            Calificar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+        
+        list.innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Error cargando GAES:', error);
+        list.innerHTML = '<p class="empty-state">Error al cargar GAES</p>';
     });
+}
+
+function verIntegrantesGaes(gaesId, gaesNombre) {
+    // Actualizar el título del modal
+    document.getElementById('gaes-nombre-modal').textContent = gaesNombre;
     
-    html += `
-            </tbody>
-        </table>
-    `;
+    // Obtener aprendices del GAES
+    fetchWithAuth(`${API_BASE}/aprendices`)
+        .then(r => r.json())
+        .then(aprendices => {
+            const integrantesGaes = aprendices.filter(a => a.gaesId === gaesId);
+            
+            const integrantesList = document.getElementById('integrantes-list');
+            
+            if (integrantesGaes.length === 0) {
+                integrantesList.innerHTML = '<p class="empty-state">Este GAES no tiene integrantes asignados</p>';
+            } else {
+                let html = `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Ficha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                integrantesGaes.forEach(aprendiz => {
+                    const nombre = `${aprendiz.usuarioNombre || aprendiz.nombre || ''} ${aprendiz.usuarioApellido || aprendiz.apellido || ''}`.trim() || 'N/A';
+                    const correo = aprendiz.usuarioCorreo || aprendiz.correo || 'N/A';
+                    const ficha = aprendiz.fichaCodigoFicha || 'N/A';
+                    const estado = aprendiz.estado || 'ACTIVO';
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${nombre}</strong></td>
+                            <td>${correo}</td>
+                            <td>${ficha}</td>
+                            <td><span class="badge-estado">${estado}</span></td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                integrantesList.innerHTML = html;
+            }
+        })
+        .catch(error => {
+            console.error('Error cargando integrantes:', error);
+            document.getElementById('integrantes-list').innerHTML = '<p class="empty-state">Error al cargar integrantes</p>';
+        });
     
-    list.innerHTML = html;
+    // Abrir el modal
+    openModal('modal-ver-integrantes');
 }
 
 function abrirCalificacionGaes(gaesId) {

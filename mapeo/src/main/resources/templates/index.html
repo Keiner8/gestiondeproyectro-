@@ -43,10 +43,9 @@
             font-weight: bold;
         }
         
-        .logo img {
+        .logo svg {
             width: 50px;
             height: 50px;
-            object-fit: contain;
         }
         
         .header-actions {
@@ -168,8 +167,16 @@
         }
         
         .feature-icon {
-            font-size: 45px;
             margin-bottom: 12px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feature-icon svg {
+            width: 45px;
+            height: 45px;
         }
         
         .feature-title {
@@ -229,7 +236,8 @@
     <!-- Header -->
     <header>
         <div class="logo">
-            <img src="/img/logo1.png" alt="Logo SENA">
+            <img src="/img/logo2.png" alt="Logo SENA" style="width: 50px; height: 50px; object-fit: contain;">
+            <span style="color: white; font-weight: bold; margin-left: 10px;">SENA</span>
         </div>
         <div class="header-actions">
             <a href="/login" class="btn-login">Iniciar Sesión</a>
@@ -247,17 +255,35 @@
             
             <div class="features">
                 <div class="feature">
-                    <div class="feature-icon">👨‍🎓</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="20" r="12" stroke="#667eea" stroke-width="2"/>
+                            <path d="M16 44c0-8.84 7.16-16 16-16s16 7.16 16 16" stroke="#667eea" stroke-width="2"/>
+                            <path d="M24 52h16v4h-16z" fill="#667eea"/>
+                        </svg>
+                    </div>
                     <div class="feature-title">Aprendices</div>
                     <div class="feature-desc">Gestiona tu perfil y proyectos</div>
                 </div>
                 <div class="feature">
-                    <div class="feature-icon">👨‍🏫</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="18" r="10" stroke="#667eea" stroke-width="2"/>
+                            <path d="M20 32c-6 0-10 4-10 10v10h44v-10c0-6-4-10-10-10H20z" stroke="#667eea" stroke-width="2" fill="none"/>
+                            <path d="M32 40v8M28 44h8" stroke="#667eea" stroke-width="2"/>
+                        </svg>
+                    </div>
                     <div class="feature-title">Instructores</div>
                     <div class="feature-desc">Evalúa y supervisa aprendices</div>
                 </div>
                 <div class="feature">
-                    <div class="feature-icon">⚙️</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 64 64" fill="none">
+                            <rect x="12" y="12" width="40" height="40" rx="3" stroke="#667eea" stroke-width="2"/>
+                            <circle cx="32" cy="32" r="6" stroke="#667eea" stroke-width="2"/>
+                            <path d="M32 20v-4M32 48v4M44 32h4M16 32h-4M40 24l3-3M28 40l-3 3M40 40l3 3M28 24l-3-3" stroke="#667eea" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
                     <div class="feature-title">Administración</div>
                     <div class="feature-desc">Gestiona usuarios y fichas</div>
                 </div>

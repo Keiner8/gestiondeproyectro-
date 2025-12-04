@@ -84,16 +84,7 @@ public class FichaController {
         try {
             List<Ficha> fichas = fichaService.obtenerTodasFichas();
             List<FichaDTO> fichasDTO = fichas.stream()
-                    .map(f -> new FichaDTO(
-                            f.getId(),
-                            f.getCodigoFicha(),
-                            f.getProgramaFormacion(),
-                            f.getJornada() != null ? f.getJornada().toString() : null,
-                            f.getModalidad() != null ? f.getModalidad().toString() : null,
-                            f.getFechaInicio(),
-                            f.getFechaFin(),
-                            f.getEstado() != null ? f.getEstado().toString() : null
-                    ))
+                    .map(fichaService::convertToDTO)
                     .collect(Collectors.toList());
             return ResponseEntity.ok(fichasDTO);
         } catch (Exception e) {

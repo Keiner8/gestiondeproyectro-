@@ -131,15 +131,14 @@ function mostrarReportes(evaluaciones) {
     evaluaciones.forEach(evaluacion => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${evaluacion.id}</td>
-            <td>${evaluacion.aprendiz?.usuario?.nombre || 'N/A'}</td>
-            <td>${evaluacion.gaes?.nombre || 'N/A'}</td>
-            <td>${evaluacion.evaluador?.usuario?.nombre || 'N/A'}</td>
-            <td>${evaluacion.calificacion || 'N/A'}</td>
-            <td>${evaluacion.fecha ? new Date(evaluacion.fecha).toLocaleDateString('es-ES') : 'N/A'}</td>
-            <td class="acciones">
-                <button class="btn-icon btn-edit" onclick="abrirEditarEvaluacion(${evaluacion.id})" title="Editar">✏️</button>
-                <button class="btn-icon btn-delete" onclick="eliminarEvaluacion(${evaluacion.id})" title="Eliminar">🗑️</button>
+            <td data-label="ID">${evaluacion.id}</td>
+            <td data-label="Aprendiz">${evaluacion.aprendiz?.usuario?.nombre || 'N/A'}</td>
+            <td data-label="GAES">${evaluacion.gaes?.nombre || 'N/A'}</td>
+            <td data-label="Calificación">${evaluacion.calificacion || 'N/A'}</td>
+            <td data-label="Fecha">${evaluacion.fecha ? new Date(evaluacion.fecha).toLocaleDateString('es-ES') : 'N/A'}</td>
+            <td class="acciones" data-label="Acciones">
+                <button class="btn-icon btn-edit" onclick="abrirEditarEvaluacion(${evaluacion.id})" title="Editar">Editar</button>
+                <button class="btn-icon btn-delete" onclick="eliminarEvaluacion(${evaluacion.id})" title="Eliminar">Eliminar</button>
             </td>
         `;
         tbody.appendChild(row);

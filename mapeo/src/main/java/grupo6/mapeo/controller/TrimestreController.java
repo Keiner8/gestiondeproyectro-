@@ -2,6 +2,8 @@ package grupo6.mapeo.controller;
 
 import grupo6.mapeo.entity.Trimestre;
 import grupo6.mapeo.entity.Trimestre.EstadoTrimestre;
+import grupo6.mapeo.dto.TrimestreDTO;
+import grupo6.mapeo.dto.FichaDTO;
 import grupo6.mapeo.service.TrimestreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/trimestres")
@@ -54,9 +57,12 @@ public class TrimestreController {
     
     // READ - Obtener todos los trimestres
     @GetMapping
-    public ResponseEntity<List<Trimestre>> obtenerTodosLosTrimestres() {
+    public ResponseEntity<List<TrimestreDTO>> obtenerTodosLosTrimestres() {
         List<Trimestre> trimestres = trimestreService.obtenerTrimestres();
-        return ResponseEntity.ok(trimestres);
+        List<TrimestreDTO> trimestresDTO = trimestres.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(trimestresDTO);
     }
     
     // READ - Obtener trimestres por ficha
@@ -106,4 +112,31 @@ public class TrimestreController {
         trimestreService.eliminarTrimestre(id);
         return ResponseEntity.noContent().build();
     }
-}
+    
+    // UTILIDAD - Convertir Trimestre a TrimestreDTO
+    private TrimestreDTO convertToDTO(Trimestre trimestre) {
+        TrimestreDTO dto = new TrimestreDTO();
+        dto.setId(trimestre.getId());
+        dto.setNumero(trimestre.getNumero());
+        dto.setFichaId(trimestre.getFichaId());
+        dto.setFechaInicio(trimestre.getFechaInicio());
+        dto.setFechaFin(trimestre.getFechaFin());
+        dto.setEstado(trimestre.getEstado() != null ? trimestre.getEstado().toString() : null);
+        
+        if (trimestre.getFicha() != null) {
+            FichaDTO fichaDTO = new FichaDTO(
+                    trimestre.getFicha().getId(),
+                    trimestre.getFicha().getCodigoFicha(),
+                    trimestre.getFicha().getProgramaFormacion(),
+                    trimestre.getFicha().getJornada() != null ? trimestre.getFicha().getJornada().toString() : null,
+                    trimestre.getFicha().getModalidad() != null ? trimestre.getFicha().getModalidad().toString() : null,
+                    trimestre.getFicha().getFechaInicio(),
+                    trimestre.getFicha().getFechaFin(),
+                    trimestre.getFicha().getEstado() != null ? trimestre.getFicha().getEstado().toString() : null
+            );
+            dto.setFicha(fichaDTO);
+        }
+        
+        return dto;
+        }
+        }

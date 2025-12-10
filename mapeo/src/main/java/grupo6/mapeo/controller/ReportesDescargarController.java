@@ -80,16 +80,20 @@ public class ReportesDescargarController {
     @GetMapping("/fichas/pdf")
     public ResponseEntity<byte[]> descargarFichasPDF() {
         try {
-            List<Ficha> fichas = fichaService.obtenerTodasFichas();
+            List<Map<String, Object>> fichasAprendices = reporteAdministradorService.obtenerReporteFichasAprendices();
             
-            String[] encabezados = {"Código Ficha", "Programa", "Jornada", "Modalidad", "Estado"};
-            List<String[]> datos = fichas.stream()
+            String[] encabezados = {"Código Ficha", "Programa", "Jornada", "Modalidad", "Aprendiz", "Tipo Doc", "Número Documento", "Estado Aprendiz", "Estado Ficha"};
+            List<String[]> datos = fichasAprendices.stream()
                     .map(f -> new String[]{
-                            f.getCodigoFicha() != null ? f.getCodigoFicha() : "",
-                            f.getProgramaFormacion() != null ? f.getProgramaFormacion() : "",
-                            f.getJornada() != null ? f.getJornada().toString() : "",
-                            f.getModalidad() != null ? f.getModalidad().toString() : "",
-                            f.getEstado() != null ? f.getEstado().toString() : ""
+                            f.get("codigo_ficha") != null ? f.get("codigo_ficha").toString() : "",
+                            f.get("programa_formacion") != null ? f.get("programa_formacion").toString() : "",
+                            f.get("jornada") != null ? f.get("jornada").toString() : "",
+                            f.get("modalidad") != null ? f.get("modalidad").toString() : "",
+                            f.get("aprendiz") != null ? f.get("aprendiz").toString() : "Sin Aprendiz",
+                            f.get("tipo_documento") != null ? f.get("tipo_documento").toString() : "N/A",
+                            f.get("numero_documento") != null ? f.get("numero_documento").toString() : "",
+                            f.get("estado_aprendiz") != null ? f.get("estado_aprendiz").toString() : "",
+                            f.get("estado_ficha") != null ? f.get("estado_ficha").toString() : ""
                     })
                     .toList();
             
@@ -232,16 +236,20 @@ public class ReportesDescargarController {
     @GetMapping("/fichas/excel")
     public ResponseEntity<byte[]> descargarFichasExcel() {
         try {
-            List<Ficha> fichas = fichaService.obtenerTodasFichas();
+            List<Map<String, Object>> fichasAprendices = reporteAdministradorService.obtenerReporteFichasAprendices();
             
-            String[] encabezados = {"Código Ficha", "Programa", "Jornada", "Modalidad", "Estado"};
-            List<String[]> datos = fichas.stream()
+            String[] encabezados = {"Código Ficha", "Programa", "Jornada", "Modalidad", "Aprendiz", "Tipo Doc", "Número Documento", "Estado Aprendiz", "Estado Ficha"};
+            List<String[]> datos = fichasAprendices.stream()
                     .map(f -> new String[]{
-                            f.getCodigoFicha() != null ? f.getCodigoFicha() : "",
-                            f.getProgramaFormacion() != null ? f.getProgramaFormacion() : "",
-                            f.getJornada() != null ? f.getJornada().toString() : "",
-                            f.getModalidad() != null ? f.getModalidad().toString() : "",
-                            f.getEstado() != null ? f.getEstado().toString() : ""
+                            f.get("codigo_ficha") != null ? f.get("codigo_ficha").toString() : "",
+                            f.get("programa_formacion") != null ? f.get("programa_formacion").toString() : "",
+                            f.get("jornada") != null ? f.get("jornada").toString() : "",
+                            f.get("modalidad") != null ? f.get("modalidad").toString() : "",
+                            f.get("aprendiz") != null ? f.get("aprendiz").toString() : "Sin Aprendiz",
+                            f.get("tipo_documento") != null ? f.get("tipo_documento").toString() : "N/A",
+                            f.get("numero_documento") != null ? f.get("numero_documento").toString() : "",
+                            f.get("estado_aprendiz") != null ? f.get("estado_aprendiz").toString() : "",
+                            f.get("estado_ficha") != null ? f.get("estado_ficha").toString() : ""
                     })
                     .toList();
             

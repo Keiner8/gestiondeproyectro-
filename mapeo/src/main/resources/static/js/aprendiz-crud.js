@@ -129,20 +129,22 @@ function llenarSelectFichasAprendices() {
 }
 
 function cargarAprendices() {
-    fetchWithAuth(window.API_APRENDICES)
-        .then(response => {
-            if (!response.ok) throw new Error('Error al cargar aprendices');
-            return response.json();
-        })
-        .then(data => {
-            window.aprendicesListaCompleta = data;
-            mostrarAprendices(data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarNotificacionGlobal('Error al cargar aprendices', 'error');
-        });
-}
+     fetchWithAuth(window.API_APRENDICES)
+         .then(response => {
+             if (!response.ok) throw new Error('Error al cargar aprendices');
+             return response.json();
+         })
+         .then(data => {
+             window.aprendicesListaCompleta = data;
+             mostrarAprendices(data);
+             // Llenar filtros después de cargar aprendices
+             llenarSelectFichasEnFiltro();
+         })
+         .catch(error => {
+             console.error('Error:', error);
+             mostrarNotificacionGlobal('Error al cargar aprendices', 'error');
+         });
+ }
 
 function mostrarAprendices(aprendices) {
     const tbody = document.getElementById('aprendices-tbody');
@@ -182,21 +184,58 @@ function mostrarAprendices(aprendices) {
 
 // ===== FILTROS =====
 function setupFiltrosAprendices() {
-    const searchEl = document.getElementById('aprendices-search');
-    if (searchEl) searchEl.addEventListener('keyup', aplicarFiltrosAprendices);
-}
-
-function aplicarFiltrosAprendices() {
-    const searchTerm = document.getElementById('aprendices-search')?.value.toLowerCase() || '';
-    
-    let aprendicesFiltrados = window.aprendicesListaCompleta.filter(aprendiz => {
-        const usuario = window.usuariosListaCompleta.find(u => u.id === aprendiz.usuario?.id);
-        const nombreCompleto = usuario ? (usuario.nombre + ' ' + usuario.apellido).toLowerCase() : '';
-        return nombreCompleto.includes(searchTerm);
-    });
-    
-    mostrarAprendices(aprendicesFiltrados);
-}
+     const searchEl = document.getElementById('aprendices-search');
+     const fichaFilterEl = document.getElementById('aprendices-ficha-filter');
+     const estadoFilterEl = document.getElementById('aprendices-estado-filter');
+     
+     if (searchEl) searchEl.addEventListener('keyup', aplicarFiltrosAprendices);
+     if (fichaFilterEl) fichaFilterEl.addEventListener('change', aplicarFiltrosAprendices);
+     if (estadoFilterEl) estadoFilterEl.addEventListener('change', aplicarFiltrosAprendices);
+     
+     // Llenar select de fichas en el filtro
+     llenarSelectFichasEnFiltro();
+ }
+ 
+ function llenarSelectFichasEnFiltro() {
+     const select = document.getElementById('aprendices-ficha-filter');
+     if (!select) return;
+     
+     while (select.options.length > 1) {
+         select.remove(1);
+     }
+     
+     window.fichasListaCompleta.forEach(ficha => {
+         const option = document.createElement('option');
+         option.value = ficha.id;
+         option.textContent = ficha.codigoFicha;
+         select.appendChild(option);
+     });
+ }
+ 
+ function aplicarFiltrosAprendices() {
+     const searchTerm = document.getElementById('aprendices-search')?.value.toLowerCase() || '';
+     const fichaFilter = document.getElementById('aprendices-ficha-filter')?.value || '';
+     const estadoFilter = document.getElementById('aprendices-estado-filter')?.value || '';
+     
+     console.log('Filtros aplicados - Búsqueda:', searchTerm, 'Ficha:', fichaFilter, 'Estado:', estadoFilter);
+     console.log('Total aprendices:', window.aprendicesListaCompleta?.length);
+     
+     let aprendicesFiltrados = window.aprendicesListaCompleta.filter(aprendiz => {
+         const usuario = window.usuariosListaCompleta.find(u => u.id === aprendiz.usuario?.id);
+         const nombreCompleto = usuario ? (usuario.nombre + ' ' + usuario.apellido).toLowerCase() : '';
+         
+         const matchNombre = nombreCompleto.includes(searchTerm);
+         const matchFicha = !fichaFilter || (aprendiz.ficha && parseInt(aprendiz.ficha.id) === parseInt(fichaFilter));
+         const matchEstado = !estadoFilter || aprendiz.estado === estadoFilter;
+         
+         console.log(`Aprendiz ${aprendiz.id}: nombre match=${matchNombre}, ficha match=${matchFicha}, estado match=${matchEstado}, ficha.id=${aprendiz.ficha?.id}`);
+         
+         return matchNombre && matchFicha && matchEstado;
+     });
+     
+     console.log('Aprendices filtrados:', aprendicesFiltrados.length);
+     mostrarAprendices(aprendicesFiltrados);
+ }
 
 // ===== CREAR APRENDIZ =====
 function crearAprendiz(event) {
@@ -204,17 +243,24 @@ function crearAprendiz(event) {
      
      const usuarioId = document.getElementById('aprendiz-usuario').value;
      const fichaId = document.getElementById('aprendiz-ficha').value;
+     const nivel = document.getElementById('aprendiz-nivel').value;
      
-     console.log('Creando aprendiz con usuarioId:', usuarioId, 'fichaId:', fichaId);
+     console.log('Creando aprendiz con usuarioId:', usuarioId, 'fichaId:', fichaId, 'nivel:', nivel);
      
      if (!usuarioId) {
          mostrarNotificacionGlobal('Por favor selecciona un usuario', 'warning');
          return;
      }
      
+     if (!nivel) {
+         mostrarNotificacionGlobal('Por favor selecciona el nivel de formación', 'warning');
+         return;
+     }
+     
      const nuevoAprendiz = {
          usuarioId: parseInt(usuarioId),
-         fichaId: fichaId ? parseInt(fichaId) : null
+         fichaId: fichaId ? parseInt(fichaId) : null,
+         nivel: nivel
      };
     
     console.log('Datos a enviar:', JSON.stringify(nuevoAprendiz));

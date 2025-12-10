@@ -273,12 +273,16 @@ body.dark-mode .btn-icon:hover {
 }
 
 .section h1 {
-    margin-bottom: 30px;
-    color: var(--primary-color);
-    font-size: 32px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
+     margin-bottom: 30px;
+     color: var(--primary-color);
+     font-size: 32px;
+     font-weight: 700;
+     letter-spacing: -0.5px;
+ }
+
+ body.dark-mode .section h1 {
+     color: #ffffff;
+ }
 
 /* ==========================================
    BOTONES

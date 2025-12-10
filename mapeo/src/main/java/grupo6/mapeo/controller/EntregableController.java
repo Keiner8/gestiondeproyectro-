@@ -3,7 +3,9 @@ package grupo6.mapeo.controller;
 import grupo6.mapeo.entity.Entregable;
 import grupo6.mapeo.service.EntregableService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -76,6 +78,34 @@ public class EntregableController {
         }
     }
     
+    // READ - Descargar archivo del entregable (DEBE IR PRIMERO)
+    @GetMapping("/{id}/descargar")
+    public ResponseEntity<?> descargarArchivo(@PathVariable Integer id) {
+        try {
+            Entregable entregable = entregableService.obtenerEntregablePorId(id);
+            
+            if (entregable == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Entregable no encontrado");
+            }
+            
+            if (entregable.getArchivo() == null || entregable.getArchivo().length == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Este entregable no tiene archivo adjunto");
+            }
+            
+            String nombreArchivo = entregable.getNombreArchivo() != null ? entregable.getNombreArchivo() : "entregable.bin";
+            
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombreArchivo + "\"")
+                    .body(entregable.getArchivo());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al descargar archivo: " + e.getMessage());
+        }
+    }
+    
     // READ - Obtener entregable por ID
     @GetMapping("/{id}")
     public ResponseEntity<Entregable> obtenerEntregable(@PathVariable Integer id) {
@@ -126,7 +156,6 @@ public class EntregableController {
         List<Entregable> entregables = entregableService.obtenerEntregablesPorAprendizId(aprendizId);
         return ResponseEntity.ok(entregables);
     }
-    
 
     
     // UPDATE - Actualizar entregable

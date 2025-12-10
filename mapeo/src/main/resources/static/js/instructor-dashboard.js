@@ -184,25 +184,44 @@ function updateFichasList() {
 // ============================================================
 
 function updateAprendicesList() {
-    const list = document.getElementById('aprendices-list');
-    list.innerHTML = '';
-    
-    if (!instructorData.fichas || instructorData.fichas.length === 0) {
-        list.innerHTML = '<p class="empty-state">No hay aprendices</p>';
-        return;
-    }
-    
-    let allAprendices = [];
-    instructorData.fichas.forEach(ficha => {
-        if (ficha.aprendices) {
-            ficha.aprendices.forEach(aprendiz => {
-                allAprendices.push({
-                    ...aprendiz,
-                    fichaAsignada: ficha
-                });
-            });
-        }
-    });
+     const list = document.getElementById('aprendices-list');
+     list.innerHTML = '';
+     
+     // Llenar el select de fichas
+     const fichaFilter = document.getElementById('ficha-filter');
+     if (fichaFilter) {
+         // Limpiar opciones excepto la primera
+         while (fichaFilter.options.length > 1) {
+             fichaFilter.remove(1);
+         }
+         
+         // Agregar fichas
+         if (instructorData.fichas) {
+             instructorData.fichas.forEach(ficha => {
+                 const option = document.createElement('option');
+                 option.value = ficha.codigoFicha;
+                 option.textContent = `${ficha.codigoFicha} - ${ficha.programaFormacion}`;
+                 fichaFilter.appendChild(option);
+             });
+         }
+     }
+     
+     if (!instructorData.fichas || instructorData.fichas.length === 0) {
+         list.innerHTML = '<p class="empty-state">No hay aprendices</p>';
+         return;
+     }
+     
+     let allAprendices = [];
+     instructorData.fichas.forEach(ficha => {
+         if (ficha.aprendices) {
+             ficha.aprendices.forEach(aprendiz => {
+                 allAprendices.push({
+                     ...aprendiz,
+                     fichaAsignada: ficha
+                 });
+             });
+         }
+     });
     
     if (allAprendices.length === 0) {
         list.innerHTML = '<table class="table"><tr><td colspan="5" class="empty-state">No hay aprendices registrados</td></tr></table>';
@@ -578,7 +597,69 @@ function setupEventListeners() {
             }
         });
     });
+    
+    // Event listeners para filtros de aprendices
+    const fichaFilter = document.getElementById('ficha-filter');
+    const aprendicesSearch = document.getElementById('aprendices-search');
+    
+    if (fichaFilter) {
+        fichaFilter.addEventListener('change', filtrarAprendices);
+    }
+    
+    if (aprendicesSearch) {
+        aprendicesSearch.addEventListener('keyup', filtrarAprendices);
+    }
+    
+    // Event listeners para filtros de aprendices por GAES
+    const gaesFilterReporte = document.getElementById('aprendices-gaes-filter');
+    const aprendicesGaesSearch = document.getElementById('aprendices-gaes-search');
+    
+    if (gaesFilterReporte) {
+        gaesFilterReporte.addEventListener('change', filtrarAprendicesPorGaes);
+        // Cargar el reporte al cargar la página
+        loadReporteAprendicesPorGaes();
+    }
+    
+    if (aprendicesGaesSearch) {
+        aprendicesGaesSearch.addEventListener('keyup', filtrarAprendicesPorGaes);
+    }
 }
+ 
+ function filtrarAprendices() {
+     const fichaFilterValue = document.getElementById('ficha-filter')?.value || '';
+     const searchValue = document.getElementById('aprendices-search')?.value.toLowerCase() || '';
+     
+     const list = document.getElementById('aprendices-list');
+     const rows = list.querySelectorAll('tbody tr');
+     
+     rows.forEach(row => {
+         let mostrar = true;
+         
+         // Filtro por ficha
+         if (fichaFilterValue) {
+             const fichaCelda = row.querySelector('td:nth-child(3)');
+             if (fichaCelda) {
+                 const fichaTexto = fichaCelda.textContent.toLowerCase();
+                 if (!fichaTexto.includes(fichaFilterValue.toLowerCase())) {
+                     mostrar = false;
+                 }
+             }
+         }
+         
+         // Filtro por búsqueda de nombre
+         if (searchValue && mostrar) {
+             const nombreCelda = row.querySelector('td:nth-child(1)');
+             if (nombreCelda) {
+                 const nombreTexto = nombreCelda.textContent.toLowerCase();
+                 if (!nombreTexto.includes(searchValue)) {
+                     mostrar = false;
+                 }
+             }
+         }
+         
+         row.style.display = mostrar ? '' : 'none';
+     });
+ }
 
 // ============================================================
 // PREVIEW DE FOTO DE PERFIL
@@ -848,59 +929,180 @@ function abrirCalificacionGaes(gaesId) {
 }
 
 async function guardarCalificacionGaes(event) {
-    event.preventDefault();
-    
-    const gaesId = parseInt(document.getElementById('calificacion-gaes-id').value);
-    let nota = parseFloat(document.getElementById('calificacion-nota-gaes').value);
-    const observaciones = document.getElementById('calificacion-observaciones-gaes').value;
-    
-    if (isNaN(gaesId) || isNaN(nota)) {
-        alert('Por favor completa todos los campos');
+     event.preventDefault();
+     
+     const gaesId = parseInt(document.getElementById('calificacion-gaes-id').value);
+     let nota = parseFloat(document.getElementById('calificacion-nota-gaes').value);
+     const observaciones = document.getElementById('calificacion-observaciones-gaes').value;
+     
+     if (isNaN(gaesId) || isNaN(nota)) {
+         alert('Por favor completa todos los campos');
+         return;
+     }
+     
+     // Validar según la escala
+     if (escalaGaesActual === 100) {
+         if (nota < 0 || nota > 100) {
+             alert('La calificación debe estar entre 0 y 100');
+             return;
+         }
+         // Convertir a escala 0-5
+         nota = (nota / 100) * 5;
+     } else {
+         if (nota < 0 || nota > 5) {
+             alert('La calificación debe estar entre 0 y 5');
+             return;
+         }
+     }
+     
+     // Crear objeto de evaluación para el GAES
+     const evaluacion = {
+         calificacion: nota,
+         observaciones: observaciones,
+         gaesId: gaesId,
+         instructorId: instructorData.instructor.id,
+         fecha: new Date().toISOString()
+     };
+     
+     try {
+          // Nota: Esto requiere un endpoint POST /api/evaluaciones/gaes
+          // Si no existe, crea uno en el backend
+          const response = await fetchWithAuth(`${API_BASE}/evaluaciones/gaes`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(evaluacion)
+          });
+         
+         if (response.ok) {
+             alert('Calificación del GAES guardada correctamente');
+             closeModal('modal-calificar-gaes');
+             loadInstructorData();
+         } else {
+             alert('Error al guardar la calificación del GAES');
+         }
+     } catch (error) {
+         console.error('Error:', error);
+         alert('Error al guardar la calificación del GAES');
+     }
+}
+
+// ============================================================
+// REPORTE APRENDICES POR GAES
+// ============================================================
+
+function loadReporteAprendicesPorGaes() {
+    const fichaId = instructorData.fichas?.[0]?.id;
+    if (!fichaId) {
+        const list = document.getElementById('reporte-aprendices-gaes-list');
+        if (list) list.innerHTML = '<p class="empty-state">No hay ficha asignada</p>';
         return;
     }
     
-    // Validar según la escala
-    if (escalaGaesActual === 100) {
-        if (nota < 0 || nota > 100) {
-            alert('La calificación debe estar entre 0 y 100');
-            return;
-        }
-        // Convertir a escala 0-5
-        nota = (nota / 100) * 5;
-    } else {
-        if (nota < 0 || nota > 5) {
-            alert('La calificación debe estar entre 0 y 5');
-            return;
-        }
-    }
-    
-    // Crear objeto de evaluación para el GAES
-    const evaluacion = {
-        calificacion: nota,
-        observaciones: observaciones,
-        gaesId: gaesId,
-        instructorId: instructorData.instructor.id,
-        fecha: new Date().toISOString()
-    };
-    
-    try {
-         // Nota: Esto requiere un endpoint POST /api/evaluaciones/gaes
-         // Si no existe, crea uno en el backend
-         const response = await fetchWithAuth(`${API_BASE}/evaluaciones/gaes`, {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify(evaluacion)
-         });
+    // Cargar GAES y aprendices
+    Promise.all([
+        fetchWithAuth(`${API_BASE}/gaes?fichaId=${fichaId}`).then(r => r.json()),
+        fetchWithAuth(`${API_BASE}/aprendices`).then(r => r.json())
+    ])
+    .then(([gaesArray, aprendices]) => {
+        // Guardar datos globales para filtrar
+        window.gaesReporteData = gaesArray || [];
+        window.aprendicesReporteData = aprendices || [];
         
-        if (response.ok) {
-            alert('Calificación del GAES guardada correctamente');
-            closeModal('modal-calificar-gaes');
-            loadInstructorData();
-        } else {
-            alert('Error al guardar la calificación del GAES');
+        // Llenar el select de GAES
+        const gaesFilter = document.getElementById('aprendices-gaes-filter');
+        if (gaesFilter) {
+            // Limpiar opciones excepto la primera
+            while (gaesFilter.options.length > 1) {
+                gaesFilter.remove(1);
+            }
+            
+            // Agregar GAES
+            (gaesArray || []).forEach(gaes => {
+                const option = document.createElement('option');
+                option.value = gaes.id;
+                option.textContent = gaes.nombre || `GAES ${gaes.id}`;
+                gaesFilter.appendChild(option);
+            });
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al guardar la calificación del GAES');
+        
+        // Mostrar todos los aprendices
+        mostrarAprendicesPorGaes(aprendices || []);
+    })
+    .catch(error => {
+        console.error('Error cargando reporte de aprendices por GAES:', error);
+        const list = document.getElementById('reporte-aprendices-gaes-list');
+        if (list) list.innerHTML = '<p class="empty-state">Error al cargar datos</p>';
+    });
+}
+
+function mostrarAprendicesPorGaes(aprendices) {
+    const list = document.getElementById('reporte-aprendices-gaes-list');
+    if (!list) return;
+    
+    if (!aprendices || aprendices.length === 0) {
+        list.innerHTML = '<p class="empty-state">No hay aprendices registrados</p>';
+        return;
     }
+    
+    let html = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Aprendiz</th>
+                    <th>Correo</th>
+                    <th>GAES</th>
+                    <th>Ficha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    aprendices.forEach(aprendiz => {
+        const nombre = `${aprendiz.usuarioNombre || aprendiz.usuario?.nombre || aprendiz.nombre || ''} ${aprendiz.usuarioApellido || aprendiz.usuario?.apellido || aprendiz.apellido || ''}`.trim() || 'N/A';
+        const correo = aprendiz.usuarioCorreo || aprendiz.usuario?.correo || aprendiz.correo || 'N/A';
+        const gaes = aprendiz.gaesNombre || (window.gaesReporteData?.find(g => g.id === aprendiz.gaesId)?.nombre) || 'N/A';
+        const ficha = aprendiz.fichaCodigoFicha || aprendiz.ficha?.codigoFicha || 'N/A';
+        const estado = aprendiz.estado || 'ACTIVO';
+        
+        html += `
+            <tr>
+                <td><strong>${nombre}</strong></td>
+                <td>${correo}</td>
+                <td>${gaes}</td>
+                <td>${ficha}</td>
+                <td><span class="badge-estado">${estado}</span></td>
+            </tr>
+        `;
+    });
+    
+    html += `
+            </tbody>
+        </table>
+    `;
+    
+    list.innerHTML = html;
+}
+
+function filtrarAprendicesPorGaes() {
+    const gaesFilterValue = document.getElementById('aprendices-gaes-filter')?.value || '';
+    const searchValue = document.getElementById('aprendices-gaes-search')?.value.toLowerCase() || '';
+    
+    let aprendicesFiltrados = window.aprendicesReporteData || [];
+    
+    // Filtro por GAES
+    if (gaesFilterValue) {
+        aprendicesFiltrados = aprendicesFiltrados.filter(a => a.gaesId === parseInt(gaesFilterValue));
+    }
+    
+    // Filtro por búsqueda
+    if (searchValue) {
+        aprendicesFiltrados = aprendicesFiltrados.filter(a => {
+            const nombre = `${a.usuarioNombre || a.usuario?.nombre || a.nombre || ''} ${a.usuarioApellido || a.usuario?.apellido || a.apellido || ''}`.trim().toLowerCase();
+            const correo = (a.usuarioCorreo || a.usuario?.correo || a.correo || '').toLowerCase();
+            return nombre.includes(searchValue) || correo.includes(searchValue);
+        });
+    }
+    
+    mostrarAprendicesPorGaes(aprendicesFiltrados);
 }

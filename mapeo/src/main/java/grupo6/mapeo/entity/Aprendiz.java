@@ -28,6 +28,9 @@ public class Aprendiz {
     @Column(name = "estado", nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'ACTIVO'")
     private String estado = "ACTIVO";
     
+    @Column(name = "nivel", length = 20)
+    private String nivel;
+    
     // Constructores
     public Aprendiz() {
     }
@@ -94,5 +97,13 @@ public class Aprendiz {
     
     public void setEsLider(Boolean esLider) {
         this.esLider = esLider;
+    }
+    
+    public String getNivel() {
+        return nivel;
+    }
+    
+    public void setNivel(String nivel) {
+        this.nivel = nivel;
     }
 }

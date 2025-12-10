@@ -1,11 +1,14 @@
 // ===== VER PROYECTOS DEL APRENDIZ - INSTRUCTOR =====
 
-// Variable global para almacenar el instructor actual
+// Variables globales para almacenar datos
 let instructorActual = null;
+let proyectosGlobales = [];
+let aprendicesGlobales = [];
 
+// Cargar proyectos cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-     cargarProyectosAprendices();
- });
+    cargarProyectosAprendices();
+});
 
 function cargarProyectosAprendices() {
      // Obtener ID del usuario desde localStorage
@@ -48,6 +51,8 @@ function cargarProyectosAprendices() {
          })
          .then(([instructor, aprendices, proyectos]) => {
              instructorActual = instructor; // Guardar instructor globalmente
+             proyectosGlobales = proyectos; // Guardar proyectos globalmente
+             aprendicesGlobales = aprendices; // Guardar aprendices globalmente
              mostrarProyectosAprendices(instructor, aprendices, proyectos);
          })
          .catch(error => {
@@ -255,18 +260,84 @@ function abrirCalificar(proyectoId) {
 
 // Buscar y filtrar proyectos
 function filtrarProyectos() {
-    const searchTerm = document.getElementById('proyectos-search')?.value.toLowerCase() || '';
+    // Si no hay datos globales, cargar primero
+    if (!proyectosGlobales || proyectosGlobales.length === 0) {
+        console.log('Datos vacíos, cargando proyectos...');
+        cargarProyectosAprendices();
+        return;
+    }
     
-    fetch(`${window.API_PROYECTOS}`)
-        .then(response => response.json())
-        .then(proyectos => {
-            const proyectosFiltrados = proyectos.filter(p => 
-                p.nombre.toLowerCase().includes(searchTerm) ||
-                (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm))
-            );
-            
-            const aprendices = [];
-            mostrarProyectosAprendices(aprendices, proyectosFiltrados);
-        })
-        .catch(error => console.error('Error:', error));
+    const searchTerm = document.getElementById('proyectos-search')?.value.toLowerCase() || '';
+    const estadoFiltro = document.getElementById('proyectos-estado-filter')?.value || '';
+    
+    console.log('Filtrando proyectos...');
+    console.log('searchTerm:', searchTerm);
+    console.log('estadoFiltro:', estadoFiltro);
+    console.log('proyectosGlobales disponibles:', proyectosGlobales.length);
+    
+    // Mapear valores del dropdown a estados del backend
+    const estadoMap = {
+        'en_proceso': ['EN_PROCESO', 'EN_DESARROLLO'],
+        'finalizado': ['FINALIZADO'],
+        'cancelado': ['CANCELADO']
+    };
+    
+    const estadosPermitidos = estadoMap[estadoFiltro] || null;
+    
+    const proyectosFiltrados = proyectosGlobales.filter(p => {
+        // Filtrar por búsqueda
+        const cumpleBusqueda = !searchTerm || 
+            p.nombre.toLowerCase().includes(searchTerm) ||
+            (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm));
+        
+        // Filtrar por estado: si no hay filtro, mostrar todos; si hay, comparar con el mapa
+        const cumpleEstado = !estadoFiltro || 
+            (p.estado && estadosPermitidos && estadosPermitidos.includes(p.estado.toUpperCase()));
+        
+        return cumpleBusqueda && cumpleEstado;
+    });
+    
+    console.log('Total de proyectos:', proyectosGlobales.length);
+    console.log('Proyectos filtrados:', proyectosFiltrados.length);
+    
+    // Mostrar los proyectos filtrados en la tabla
+    const tbody = document.getElementById('proyectos-aprendices-tbody');
+    if (!tbody) {
+        console.error('No se encontró el tbody de proyectos');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    if (proyectosFiltrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No hay proyectos que coincidan con tu búsqueda</td></tr>';
+        return;
+    }
+    
+    // Renderizar los proyectos filtrados
+    proyectosFiltrados.forEach(proyecto => {
+        const row = document.createElement('tr');
+        const estadoColor = proyecto.estado === 'EN_DESARROLLO' ? '#fff3cd' : 
+                           proyecto.estado === 'FINALIZADO' ? '#d4edda' : 
+                           proyecto.estado === 'APROBADO' ? '#c3e6cb' :
+                           proyecto.estado === 'EN_REVISION' ? '#fff3cd' : '#f8d7da';
+        const estadoText = proyecto.estado === 'EN_DESARROLLO' ? 'En desarrollo' : 
+                          proyecto.estado === 'FINALIZADO' ? 'Finalizado' : 
+                          proyecto.estado === 'APROBADO' ? 'Aprobado' :
+                          proyecto.estado === 'EN_REVISION' ? 'En revisión' : 
+                          proyecto.estado === 'RECHAZADO' ? 'Rechazado' : proyecto.estado;
+        
+        row.innerHTML = `
+            <td>${proyecto.id}</td>
+            <td>${proyecto.nombre}</td>
+            <td>${proyecto.descripcion || 'Sin descripción'}</td>
+            <td><span style="background-color: ${estadoColor}; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${estadoText}</span></td>
+            <td>${proyecto.fechaInicio ? new Date(proyecto.fechaInicio).toLocaleDateString() : 'No definida'}</td>
+            <td class="acciones">
+                <button class="btn-action btn-info" onclick="verProyectoDetalle(${proyecto.id})" title="Ver">Ver</button>
+                <button class="btn-action btn-primary" onclick="abrirCalificar(${proyecto.id})" title="Calificar">Calificar</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
 }

@@ -41,6 +41,19 @@
             color: white;
             font-size: 24px;
             font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .logo:hover {
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .logo img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
         }
         
         .logo svg {
@@ -90,15 +103,25 @@
         }
         
         .welcome-card {
-            background: white;
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-            max-width: 550px;
-            width: 100%;
-            text-align: center;
-            animation: slideUp 0.6s ease-out;
-        }
+             background: white;
+             padding: 50px 40px;
+             border-radius: 20px;
+             box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+             max-width: 550px;
+             width: 100%;
+             text-align: center;
+             animation: slideUp 0.6s ease-out;
+             position: relative;
+         }
+         
+         .welcome-card .logo-corner {
+             position: absolute;
+             top: 20px;
+             right: 20px;
+             width: 50px;
+             height: 50px;
+             object-fit: contain;
+         }
         
         @keyframes slideUp {
             from {
@@ -235,10 +258,10 @@
 <body>
     <!-- Header -->
     <header>
-        <div class="logo">
-            <img src="/img/logo2.png" alt="Logo SENA" style="width: 50px; height: 50px; object-fit: contain;">
-            <span style="color: white; font-weight: bold; margin-left: 10px;">SENA</span>
-        </div>
+        <a href="/" class="logo">
+            <img src="/img/logo_sena.png" alt="Logo SENA">
+            
+        </a>
         <div class="header-actions">
             <a href="/login" class="btn-login">Iniciar Sesión</a>
             <a href="/register" class="btn-register">Registrarse</a>
@@ -248,6 +271,7 @@
     <!-- Main Content -->
     <main>
         <div class="welcome-card">
+            <img src="/img/logo2.png" alt="Logo 2" class="logo-corner">
             <h1>Bienvenido al Sistema de Gestión SENA</h1>
             <p>Plataforma para la gestión académica del SENA: aprendices, instructores y administradores trabajan juntos para facilitar la formación, seguimiento de proyectos y evaluaciones.</p>
             

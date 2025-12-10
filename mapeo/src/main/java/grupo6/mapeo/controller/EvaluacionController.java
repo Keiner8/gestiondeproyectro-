@@ -236,16 +236,51 @@ public class EvaluacionController {
              
              documento.open();
              
-             // Agregar logo
+             // Agregar logos juntos en el centro (logo2 y logo_sena)
              try {
-                 ClassPathResource resource = new ClassPathResource("static/img/logo2.png");
-                 Image logo = Image.getInstance(resource.getFile().getAbsolutePath());
-                 logo.scaleToFit(80, 80);
-                 logo.setAlignment(Element.ALIGN_CENTER);
-                 documento.add(logo);
+                 PdfPTable logosTable = new PdfPTable(3);
+                 logosTable.setWidthPercentage(100);
+                 logosTable.setHorizontalAlignment(Element.ALIGN_CENTER);
+                 logosTable.setSpacingBefore(10f);
+                 logosTable.setWidths(new float[]{1f, 2.5f, 1f});
+                 
+                 // Columna 1 - vacía (izquierda)
+                 PdfPCell celdaVacia1 = new PdfPCell(new Paragraph(""));
+                 celdaVacia1.setBorder(0);
+                 logosTable.addCell(celdaVacia1);
+                 
+                 // Columna 2 - logo2 (centro - en el cuadro rojo)
+                 PdfPCell celdaLogo2 = new PdfPCell();
+                 celdaLogo2.setBorder(0);
+                 celdaLogo2.setHorizontalAlignment(Element.ALIGN_CENTER);
+                 try {
+                     ClassPathResource resource2 = new ClassPathResource("static/img/logo2.png");
+                     Image logo2 = Image.getInstance(resource2.getFile().getAbsolutePath());
+                     logo2.scaleToFit(80, 80);
+                     celdaLogo2.addElement(logo2);
+                 } catch (Exception e) {
+                     System.out.println("No se pudo cargar logo2.png: " + e.getMessage());
+                 }
+                 logosTable.addCell(celdaLogo2);
+                 
+                 // Columna 3 - logo_sena (derecha - en el cuadro rojo)
+                 PdfPCell celdaSena = new PdfPCell();
+                 celdaSena.setBorder(0);
+                 celdaSena.setHorizontalAlignment(Element.ALIGN_CENTER);
+                 try {
+                     ClassPathResource resource1 = new ClassPathResource("static/img/logo_sena.png");
+                     Image logo1 = Image.getInstance(resource1.getFile().getAbsolutePath());
+                     logo1.scaleToFit(80, 80);
+                     celdaSena.addElement(logo1);
+                 } catch (Exception e) {
+                     System.out.println("No se pudo cargar logo_sena.png: " + e.getMessage());
+                 }
+                 logosTable.addCell(celdaSena);
+                 
+                 documento.add(logosTable);
                  documento.add(new Paragraph(" "));
              } catch (Exception e) {
-                 System.out.println("No se pudo cargar el logo: " + e.getMessage());
+                 System.out.println("Error agregando logos: " + e.getMessage());
              }
              
              // Título con estilo

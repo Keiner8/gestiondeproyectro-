@@ -134,6 +134,86 @@ public class GaesService {
         return new GaesDTO(gaes.getId(), gaes.getNombre(), gaes.getFichaId(), gaes.getEstado(), integrantesDTO);
     }
     
+    // Obtener todos los GAES con integrantes como DTO
+    public List<GaesDTO> obtenerTodosGaesConIntegrantesDTO() {
+        List<Gaes> gaesList = obtenerTodosGaes();
+        return gaesList.stream()
+            .map(gaes -> {
+                List<AprendizDTO> integrantesDTO = null;
+                if (gaes.getIntegrantes() != null && !gaes.getIntegrantes().isEmpty()) {
+                    integrantesDTO = gaes.getIntegrantes().stream()
+                        .map(aprendiz -> {
+                            AprendizDTO dto = new AprendizDTO();
+                            dto.setId(aprendiz.getId());
+                            if (aprendiz.getUsuario() != null) {
+                                dto.setUsuarioId(aprendiz.getUsuario().getId());
+                                dto.setUsuarioNombre(aprendiz.getUsuario().getNombre());
+                                dto.setUsuarioApellido(aprendiz.getUsuario().getApellido());
+                                dto.setUsuarioCorreo(aprendiz.getUsuario().getCorreo());
+                            }
+                            if (aprendiz.getFicha() != null) {
+                                dto.setFichaId(aprendiz.getFicha().getId());
+                                dto.setFichaCodigoFicha(aprendiz.getFicha().getCodigoFicha());
+                                dto.setFichaProgramaFormacion(aprendiz.getFicha().getProgramaFormacion());
+                            }
+                            if (aprendiz.getGaes() != null) {
+                                dto.setGaesId(aprendiz.getGaes().getId());
+                                dto.setGaesNombre(aprendiz.getGaes().getNombre());
+                            }
+                            dto.setEsLider(aprendiz.getEsLider());
+                            dto.setEstado(aprendiz.getEstado());
+                            return dto;
+                        })
+                        .collect(Collectors.toList());
+                } else {
+                    integrantesDTO = List.of();
+                }
+                
+                return new GaesDTO(gaes.getId(), gaes.getNombre(), gaes.getFichaId(), gaes.getEstado(), integrantesDTO);
+            })
+            .collect(Collectors.toList());
+    }
+    
+    // Obtener GAES por ficha con integrantes como DTO
+    public List<GaesDTO> obtenerGaesPorFichaConIntegrantesDTO(Integer fichaId) {
+        List<Gaes> gaesList = obtenerGaesPorFicha(fichaId);
+        return gaesList.stream()
+            .map(gaes -> {
+                List<AprendizDTO> integrantesDTO = null;
+                if (gaes.getIntegrantes() != null && !gaes.getIntegrantes().isEmpty()) {
+                    integrantesDTO = gaes.getIntegrantes().stream()
+                        .map(aprendiz -> {
+                            AprendizDTO dto = new AprendizDTO();
+                            dto.setId(aprendiz.getId());
+                            if (aprendiz.getUsuario() != null) {
+                                dto.setUsuarioId(aprendiz.getUsuario().getId());
+                                dto.setUsuarioNombre(aprendiz.getUsuario().getNombre());
+                                dto.setUsuarioApellido(aprendiz.getUsuario().getApellido());
+                                dto.setUsuarioCorreo(aprendiz.getUsuario().getCorreo());
+                            }
+                            if (aprendiz.getFicha() != null) {
+                                dto.setFichaId(aprendiz.getFicha().getId());
+                                dto.setFichaCodigoFicha(aprendiz.getFicha().getCodigoFicha());
+                                dto.setFichaProgramaFormacion(aprendiz.getFicha().getProgramaFormacion());
+                            }
+                            if (aprendiz.getGaes() != null) {
+                                dto.setGaesId(aprendiz.getGaes().getId());
+                                dto.setGaesNombre(aprendiz.getGaes().getNombre());
+                            }
+                            dto.setEsLider(aprendiz.getEsLider());
+                            dto.setEstado(aprendiz.getEstado());
+                            return dto;
+                        })
+                        .collect(Collectors.toList());
+                } else {
+                    integrantesDTO = List.of();
+                }
+                
+                return new GaesDTO(gaes.getId(), gaes.getNombre(), gaes.getFichaId(), gaes.getEstado(), integrantesDTO);
+            })
+            .collect(Collectors.toList());
+    }
+    
     // Validaciones
     public boolean existeGaesConNombre(String nombre) {
         return gaesRepository.findByNombre(nombre).isPresent();

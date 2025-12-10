@@ -111,7 +111,33 @@ function abrirMiPerfil() {
     document.getElementById('perfil-correo').value = usuarioActual.correo || '';
     document.getElementById('perfil-tipo-documento').value = usuarioActual.tipoDocumento || 'CC';
     document.getElementById('perfil-numero-documento').value = usuarioActual.numeroDocumento || '';
-}
+    
+    // Llenar nivel si el usuario es aprendiz
+    cargarNivelAprendiz(usuarioActual.id);
+    }
+
+    function cargarNivelAprendiz(usuarioId) {
+    const nivelInput = document.getElementById('perfil-nivel');
+    if (!nivelInput) return;
+    
+    // Buscar el aprendiz por usuarioId
+    fetch(`${window.API_APRENDICES}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` }
+    })
+    .then(r => r.json())
+    .then(aprendices => {
+        const aprendiz = aprendices.find(a => a.usuario?.id === usuarioId);
+        if (aprendiz && aprendiz.nivel) {
+            nivelInput.value = aprendiz.nivel === 'TECNICO' ? 'Técnico' : 'Tecnólogo';
+        } else {
+            nivelInput.value = 'Sin asignar';
+        }
+    })
+    .catch(error => {
+        console.error('Error cargando nivel:', error);
+        nivelInput.value = 'Sin asignar';
+    });
+    }
 
 // Interceptar apertura del modal
 const modalMiPerfil = document.getElementById('modal-mi-perfil');

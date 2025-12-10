@@ -110,20 +110,21 @@ function aplicarFiltrosFichas() {
 
 // ===== CREAR FICHA =====
 function crearFicha(event) {
-    event.preventDefault();
-    
-    const codigo = document.getElementById('ficha-codigo').value;
-    const programa = document.getElementById('ficha-programa').value;
-    const jornada = document.getElementById('ficha-jornada').value;
-    const modalidad = document.getElementById('ficha-modalidad').value;
-    const fechaInicio = document.getElementById('ficha-inicio').value;
-    const fechaFin = document.getElementById('ficha-fin').value;
-    const estado = document.getElementById('ficha-estado').value;
-    
-    if (!codigo || !programa || !jornada || !modalidad || !fechaInicio || !fechaFin) {
-        mostrarNotificacionFicha('Por favor completa todos los campos obligatorios', 'warning');
-        return;
-    }
+     event.preventDefault();
+     
+     const codigo = document.getElementById('ficha-codigo').value;
+     const programa = document.getElementById('ficha-programa').value;
+     const jornada = document.getElementById('ficha-jornada').value;
+     const modalidad = document.getElementById('ficha-modalidad').value;
+     const nivel = document.getElementById('ficha-nivel').value;
+     const fechaInicio = document.getElementById('ficha-inicio').value;
+     const fechaFin = document.getElementById('ficha-fin').value;
+     const estado = document.getElementById('ficha-estado').value;
+     
+     if (!codigo || !programa || !jornada || !modalidad || !nivel || !fechaInicio || !fechaFin) {
+         mostrarNotificacionFicha('Por favor completa todos los campos obligatorios', 'warning');
+         return;
+     }
     
     // Validar que la fecha fin sea mayor a la fecha inicio
     if (new Date(fechaFin) <= new Date(fechaInicio)) {
@@ -157,8 +158,14 @@ function crearFicha(event) {
         }
         return response.json();
     })
-    .then(data => {
+    .then(fichaCreada => {
         mostrarNotificacionFicha('Ficha creada exitosamente', 'success');
+        
+        // Crear trimestres automáticamente según el nivel
+        const cantidadTrimestres = nivel === 'TECNICO' ? 3 : 7;
+        return crearTrimestresAutomaticos(fichaCreada.id, cantidadTrimestres, fechaInicio, fechaFin);
+    })
+    .then(() => {
         closeModal('modal-crear-ficha');
         document.getElementById('form-crear-ficha').reset();
         cargarFichas();
@@ -316,7 +323,58 @@ function eliminarFicha(id) {
     });
 }
 
+// ===== CREAR TRIMESTRES AUTOMÁTICAMENTE =====
+function crearTrimestresAutomaticos(fichaId, cantidadTrimestres, fechaInicio, fechaFin) {
+    const promises = [];
+    const fechaInicioDate = new Date(fechaInicio);
+    const fechaFinDate = new Date(fechaFin);
+    const diasTotales = (fechaFinDate - fechaInicioDate) / (1000 * 60 * 60 * 24);
+    const diasPorTrimestre = Math.floor(diasTotales / cantidadTrimestres);
+    
+    for (let i = 1; i <= cantidadTrimestres; i++) {
+        const inicioTrimestre = new Date(fechaInicioDate);
+        inicioTrimestre.setDate(inicioTrimestre.getDate() + (i - 1) * diasPorTrimestre);
+        
+        const finTrimestre = new Date(inicioTrimestre);
+        finTrimestre.setDate(finTrimestre.getDate() + diasPorTrimestre - 1);
+        
+        // El último trimestre termina en la fecha fin de la ficha
+        if (i === cantidadTrimestres) {
+            finTrimestre.setTime(fechaFinDate.getTime());
+        }
+        
+        const trimestre = {
+            numero: i,
+            fichaId: fichaId,
+            fechaInicio: formatearFechaISO(inicioTrimestre),
+            fechaFin: formatearFechaISO(finTrimestre),
+            estado: 'ACTIVO'
+        };
+        
+        const promise = fetchWithAuth(window.API_TRIMESTRES, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(trimestre)
+        });
+        
+        promises.push(promise);
+    }
+    
+    return Promise.all(promises).catch(error => {
+        console.error('Error creando trimestres:', error);
+        // No lanzar error, solo mostrar advertencia
+        mostrarNotificacionFicha('Ficha creada pero hubo problemas al crear trimestres', 'warning');
+    });
+}
+
+function formatearFechaISO(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // ===== FUNCIONES AUXILIARES =====
 function mostrarNotificacionFicha(mensaje, tipo = 'info') {
-    mostrarNotificacionGlobal(mensaje, tipo);
+     mostrarNotificacionGlobal(mensaje, tipo);
 }

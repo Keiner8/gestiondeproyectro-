@@ -99,24 +99,25 @@ function loadAprendizData() {
              promises.push(Promise.resolve(null));
          }
          
-         // Cargar GAES completo con integrantes si existe
-          if (aprendiz.gaesId) {
-              promises.push(
-                  fetchWithAuth(`${API_BASE}/gaes/${aprendiz.gaesId}/con-integrantes`).then(r => {
-                      if (!r.ok) {
-                          // Fallback si no se puede cargar
-                          return {
-                              id: aprendiz.gaesId,
-                              nombre: aprendiz.gaesNombre || 'GAES ' + aprendiz.gaesId,
-                              integrantes: []
-                          };
-                      }
-                      return r.json();
-                  })
-              );
-          } else {
-              promises.push(Promise.resolve(null));
-          }
+         // Cargar todos los GAES donde el aprendiz es integrante
+         if (aprendiz.id) {
+             promises.push(
+                 fetchWithAuth(`${API_BASE}/gaes/con-integrantes/todos`).then(r => {
+                     if (!r.ok) return [];
+                     return r.json();
+                 }).then(todosLosGaes => {
+                     // Filtrar GAES donde el aprendiz es integrante
+                     console.log('Total de GAES en BD:', todosLosGaes.length);
+                     const gaesDelAprendiz = todosLosGaes.filter(gaes => {
+                         return gaes.integrantes && gaes.integrantes.some(int => int.id === aprendiz.id);
+                     });
+                     console.log('GAES donde es integrante:', gaesDelAprendiz.length);
+                     return gaesDelAprendiz.length > 0 ? gaesDelAprendiz : null;
+                 })
+             );
+         } else {
+             promises.push(Promise.resolve(null));
+         }
         
         // Cargar proyectos del aprendiz
         if (aprendiz.id) {
@@ -239,15 +240,20 @@ function updateDashboard() {
     }
     
     if (aprendizData.gaes) {
-        grid.innerHTML += `
-            <div class="dashboard-card">
-                <h3>👥 Mi GAES</h3>
-                <p>${aprendizData.gaes.nombre}</p>
-                <button class="btn-primary" onclick="goToSection('mis-grupos')">
-                    Ver Integrantes
-                </button>
-            </div>
-        `;
+        const gaesArray = Array.isArray(aprendizData.gaes) ? aprendizData.gaes : [aprendizData.gaes];
+        if (gaesArray.length > 0) {
+            const primerGaes = gaesArray[0];
+            grid.innerHTML += `
+                <div class="dashboard-card">
+                    <h3>👥 Mi GAES</h3>
+                    <p>${primerGaes.nombre}</p>
+                    <p><small>Integrantes: ${primerGaes.integrantes?.length || 0}</small></p>
+                    <button class="btn-primary" onclick="goToSection('mis-grupos')">
+                        Ver Integrantes
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
@@ -283,29 +289,35 @@ function updateProyectosList() {
 }
 
  function cargarTrimestresEnModal() {
-      fetch(`${API_BASE}/trimestres`)
-          .then(response => {
-              if (!response.ok) throw new Error('Error al cargar trimestres');
-              return response.json();
-          })
-          .then(trimestres => {
-              const selectTrimestre = document.getElementById('proyecto-trimestre');
-              if (!selectTrimestre) return;
-              
-              // Limpiar opciones excepto la primera
-              while (selectTrimestre.options.length > 1) {
-                  selectTrimestre.remove(1);
-              }
-              
-              trimestres.forEach(trimestre => {
-                  const option = document.createElement('option');
-                  option.value = trimestre.id;
-                  option.textContent = `Trimestre ${trimestre.numero}`;
-                  selectTrimestre.appendChild(option);
-              });
-          })
-          .catch(error => console.error('Error cargando trimestres:', error));
-  }
+       fetch(`${API_BASE}/trimestres`)
+           .then(response => {
+               if (!response.ok) throw new Error('Error al cargar trimestres');
+               return response.json();
+           })
+           .then(trimestres => {
+               const selectTrimestre = document.getElementById('proyecto-trimestre');
+               if (!selectTrimestre) return;
+               
+               // Limpiar opciones excepto la primera
+               while (selectTrimestre.options.length > 1) {
+                   selectTrimestre.remove(1);
+               }
+               
+               // Obtener fichaId del aprendiz
+               const fichaId = aprendizData?.aprendiz?.fichaId;
+               
+               // Filtrar trimestres según el tipo de programa
+               const trimestresValidos = filtrarTrimestresValidos(trimestres, fichaId);
+               
+               trimestresValidos.forEach(trimestre => {
+                   const option = document.createElement('option');
+                   option.value = trimestre.id;
+                   option.textContent = `Trimestre ${trimestre.numero}`;
+                   selectTrimestre.appendChild(option);
+               });
+           })
+           .catch(error => console.error('Error cargando trimestres:', error));
+   }
 
   function editarProyecto(id) {
         const proyecto = aprendizData.proyectos.find(p => p.id === id);
@@ -406,49 +418,131 @@ async function registrarProyecto(event) {
 // ============================================================
 
 function updateEntregablesList() {
-    const list = document.getElementById('entregables-list');
-    list.innerHTML = '';
+    const tbody = document.getElementById('entregables-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '<tr><td colspan="5" class="no-data">Cargando entregables...</td></tr>';
     
     if (!aprendizData.proyectos || aprendizData.proyectos.length === 0) {
-        list.innerHTML = '<p class="empty-state">No hay proyectos. Crea un proyecto primero para entregar entregables.</p>';
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No hay proyectos. Crea un proyecto primero para entregar entregables.</td></tr>';
         return;
     }
     
-    let html = `
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Proyecto</th>
-                    <th>Nombre</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    // Cargar entregables del servidor
+    fetchWithAuth(`${API_BASE}/entregables`)
+        .then(r => {
+            if (!r.ok) throw new Error('Error cargando entregables');
+            return r.json();
+        })
+        .then(entregables => {
+            console.log('Entregables cargados:', entregables);
+            
+            let html = '';
+            let tieneEntregables = false;
+            
+            // Agrupar entregables por proyecto
+            aprendizData.proyectos.forEach(proyecto => {
+                // Encontrar entregables de este proyecto
+                const entregablesProyecto = entregables.filter(e => e.proyectoId === proyecto.id);
+                
+                if (entregablesProyecto.length === 0) {
+                    // Mostrar proyecto sin entregables
+                    html += `
+                        <tr>
+                            <td>${proyecto.nombre}</td>
+                            <td colspan="3"><em style="color: #999;">Sin entregables subidos aún</em></td>
+                            <td>
+                                <button class="btn-primary btn-sm" onclick="abrirEntregable(${proyecto.id})">
+                                    Entregar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tieneEntregables = true;
+                    // Mostrar cada entregable
+                    entregablesProyecto.forEach((entregable, index) => {
+                        const archivoBtn = entregable.nombreArchivo || entregable.archivo 
+                            ? `<button class="btn-secondary btn-sm" onclick="descargarEntregable(${entregable.id}, '${entregable.nombreArchivo || 'entregable'}')">📥 Descargar</button>`
+                            : '<span style="color: #999;">-</span>';
+                        
+                        html += `
+                            <tr>
+                                <td>${index === 0 ? proyecto.nombre : ''}</td>
+                                <td>${entregable.nombre}</td>
+                                <td>${entregable.descripcion || '-'}</td>
+                                <td>${archivoBtn}</td>
+                                <td>
+                                    ${index === 0 ? `
+                                        <button class="btn-primary btn-sm" onclick="abrirEntregable(${proyecto.id})">
+                                            Enviar mío
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+            
+            if (!tieneEntregables) {
+                console.log('No hay entregables del instructor');
+            }
+            
+            tbody.innerHTML = html || '<tr><td colspan="5" class="no-data">No hay entregables registrados</td></tr>';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            tbody.innerHTML = '<tr><td colspan="5" class="no-data" style="color: red;">Error al cargar entregables</td></tr>';
+        });
+}
+
+// Filtrar entregables por búsqueda
+function filtrarEntregables() {
+    const searchValue = document.getElementById('entregables-search').value.toLowerCase();
+    const tbody = document.getElementById('entregables-tbody');
+    const rows = tbody.querySelectorAll('tr');
     
-    // Mostrar placeholders para cargar entregables de cada proyecto
-    aprendizData.proyectos.forEach(proyecto => {
-        html += `
-            <tr>
-                <td>${proyecto.nombre}</td>
-                <td>-</td>
-                <td><span class="badge-estado">SIN ENTREGABLES</span></td>
-                <td>
-                    <button class="btn-primary" onclick="abrirEntregable(${proyecto.id})">
-                        Entregar
-                    </button>
-                </td>
-            </tr>
-        `;
+    rows.forEach(row => {
+        const texto = row.textContent.toLowerCase();
+        if (texto.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
     });
+}
+
+// Descargar archivo del entregable
+function descargarEntregable(entregableId, nombreArchivo) {
+    console.log('Descargando entregable:', entregableId, 'Nombre:', nombreArchivo);
     
-    html += `
-            </tbody>
-        </table>
-    `;
-    
-    list.innerHTML = html;
+    // Usar fetch para mejor control de errores
+    fetchWithAuth(`/api/entregables/${entregableId}/descargar`)
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Error ${response.status}: ${text}`);
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Crear URL del blob y descargar
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nombreArchivo || 'entregable.bin';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            console.log('Descarga completada');
+        })
+        .catch(error => {
+            console.error('Error al descargar:', error);
+            alert('Error al descargar el archivo: ' + error.message);
+        });
 }
 
 function abrirEntregable(proyectoId) {
@@ -485,22 +579,28 @@ async function subirEntregable(event) {
     }
     
     try {
+         console.log('Subiendo entregable...');
          const response = await fetchWithAuth(`${API_BASE}/entregables`, {
              method: 'POST',
              body: formData
          });
         
         if (response.ok) {
+            const data = await response.json();
+            console.log('Entregable subido correctamente:', data);
             alert('Entregable subido correctamente');
             closeModal('modal-subir-entregable');
             document.getElementById('form-subir-entregable').reset();
-            loadAprendizData();
+            // Recargar solo los entregables
+            updateEntregablesList();
         } else {
-            alert('Error al subir el entregable');
+            const error = await response.text();
+            console.error('Error response:', error);
+            alert('Error al subir el entregable: ' + error);
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al subir el entregable');
+        alert('Error al subir el entregable: ' + error.message);
     }
 }
 
@@ -553,46 +653,79 @@ let gaesActual = null;
 
 function updateGaesList() {
     const list = document.getElementById('gaes-list');
+    const btnCrearGaes = document.getElementById('btn-crear-gaes');
     list.innerHTML = '';
     
-    if (!aprendizData.gaes) {
+    console.log('Actualizando GAES list. aprendizData.gaes:', aprendizData.gaes);
+    
+    // Si aprendizData.gaes es null o está vacío
+    if (!aprendizData.gaes || (Array.isArray(aprendizData.gaes) && aprendizData.gaes.length === 0)) {
         list.innerHTML = `
             <div class="card">
                 <h3>👥 Sin GAES asignado</h3>
                 <p>Crea un GAES o espera a que te asignen a uno</p>
             </div>
         `;
+        // Mostrar botón de crear GAES
+        if (btnCrearGaes) btnCrearGaes.style.display = 'block';
         return;
     }
     
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-        <h3>👥 ${aprendizData.gaes.nombre}</h3>
-        <p><strong>Integrantes:</strong> ${aprendizData.gaes.integrantes?.length || 0}</p>
-        <p><strong>Estado:</strong> <span class="badge-estado">${aprendizData.gaes.estado}</span></p>
-        <button class="btn-primary" onclick="showIntegrantes()">
-            Ver Integrantes
-        </button>
-    `;
-    list.appendChild(card);
+    // Ocultar botón de crear GAES si ya hay GAES
+    if (btnCrearGaes) btnCrearGaes.style.display = 'none';
+    
+    // Si aprendizData.gaes es un array, mostrar todos
+    const gaesArray = Array.isArray(aprendizData.gaes) ? aprendizData.gaes : [aprendizData.gaes];
+    
+    gaesArray.forEach(gaes => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <h3>👥 ${gaes.nombre}</h3>
+            <p><strong>Integrantes:</strong> ${gaes.integrantes?.length || 0}</p>
+            <p><strong>Estado:</strong> <span class="badge-estado">${gaes.estado || 'Activo'}</span></p>
+            <button class="btn-primary" onclick="showIntegrantesDelGaes(${gaes.id})">
+                Ver Integrantes
+            </button>
+        `;
+        list.appendChild(card);
+    });
 }
 
-function showIntegrantes() {
-    if (!aprendizData.gaes) return;
+function showIntegrantesDelGaes(gaesId) {
+    // Encontrar el GAES en el array
+    const gaesArray = Array.isArray(aprendizData.gaes) ? aprendizData.gaes : [aprendizData.gaes];
+    const gaesSeleccionado = gaesArray.find(g => g.id === gaesId);
     
-    gaesActual = aprendizData.gaes;
+    if (!gaesSeleccionado) {
+        alert('No se encontró el GAES');
+        return;
+    }
+    
+    gaesActual = gaesSeleccionado;
     const tbody = document.getElementById('integrantes-table-body');
     tbody.innerHTML = '';
     
-    if (!aprendizData.gaes.integrantes || aprendizData.gaes.integrantes.length === 0) {
+    if (!gaesSeleccionado.integrantes || gaesSeleccionado.integrantes.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay integrantes aún</td></tr>';
-        cargarAprendicesDisponibles();
         openModal('modal-ver-integrantes');
         return;
     }
     
-    aprendizData.gaes.integrantes.forEach((integrante, index) => {
+    mostrarIntegrantesDelGaes(gaesSeleccionado);
+}
+
+function mostrarIntegrantesDelGaes(gaes) {
+    const tbody = document.getElementById('integrantes-table-body');
+    tbody.innerHTML = '';
+    
+    if (!gaes.integrantes || gaes.integrantes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay integrantes aún</td></tr>';
+        openModal('modal-ver-integrantes');
+        return;
+    }
+    
+    gaes.integrantes.forEach((integrante, index) => {
          const tr = document.createElement('tr');
          const nombre = integrante.usuarioNombre || integrante.usuario?.nombre || integrante.nombre || 'N/A';
          const correo = integrante.usuarioCorreo || integrante.usuario?.correo || integrante.correo || 'N/A';
@@ -609,17 +742,29 @@ function showIntegrantes() {
          tbody.appendChild(tr);
      });
     
-    cargarAprendicesDisponibles();
     openModal('modal-ver-integrantes');
 }
 
 async function crearGaes(event) {
     event.preventDefault();
     
+    // Validar que el aprendiz no esté en otro GAES
+    const gaesArray = Array.isArray(aprendizData.gaes) ? aprendizData.gaes : [];
+    if (gaesArray.length > 0) {
+        alert('Ya estás asignado a un GAES. No puedes crear o unirte a otro GAES mientras estés en uno.');
+        console.log('El aprendiz ya está en GAES:', gaesArray);
+        return;
+    }
+    
     const nombre = document.getElementById('gaes-nombre').value;
     
+    if (!nombre || nombre.trim() === '') {
+        alert('Por favor ingresa un nombre para el GAES');
+        return;
+    }
+    
     const gaes = {
-        nombre: nombre,
+        nombre: nombre.trim(),
         fichaId: aprendizData.ficha?.id,
         estado: 'ACTIVO'
     };
@@ -902,14 +1047,20 @@ function getUserIdFromToken() {
 }
 
 function setupEventListeners() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    });
-}
+     document.querySelectorAll('.modal').forEach(modal => {
+         modal.addEventListener('click', (e) => {
+             if (e.target === modal) {
+                 modal.style.display = 'none';
+             }
+         });
+     });
+     
+     // Event listener para el filtro de búsqueda de entregables
+     const entregablesSearch = document.getElementById('entregables-search');
+     if (entregablesSearch) {
+         entregablesSearch.addEventListener('keyup', filtrarEntregables);
+     }
+ }
 
 // ============================================================
 // PREVIEW DE FOTO DE PERFIL

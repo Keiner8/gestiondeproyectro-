@@ -85,17 +85,55 @@ function toggleNotificationPanel() {
 }
 
 function logout() {
-    if (confirm('¿Deseas cerrar sesión?')) {
-        // Limpiar localStorage
-        localStorage.removeItem('jwtToken');
-        localStorage.removeItem('usuarioId');
-        localStorage.removeItem('usuarioNombre');
-        localStorage.removeItem('usuarioRol');
-        
-        // Reemplazar historial para prevenir volver atrás
-        window.history.replaceState(null, null, '/login');
-        window.location.replace('/login');
-    }
+     if (confirm('¿Deseas cerrar sesión?')) {
+         // Limpiar localStorage
+         localStorage.removeItem('jwtToken');
+         localStorage.removeItem('usuarioId');
+         localStorage.removeItem('usuarioNombre');
+         localStorage.removeItem('usuarioRol');
+         
+         // Reemplazar historial para prevenir volver atrás
+         window.history.replaceState(null, null, '/login');
+         window.location.replace('/login');
+     }
+}
+
+// ============================================================
+// FUNCIÓN PARA FILTRAR TRIMESTRES (según tipo de programa)
+// ============================================================
+
+function obtenerDuracionPrograma(ficha) {
+     // Detectar si es técnico (3 trimestres) o tecnólogo (7 trimestres)
+     if (!ficha) return 4; // Por defecto 4 trimestres
+     
+     const programa = ficha.programaFormacion ? ficha.programaFormacion.toLowerCase() : '';
+     
+     if (programa.includes('técnico') || programa.includes('tecnico')) {
+         return 3; // Técnico = 3 trimestres
+     } else if (programa.includes('tecnólogo') || programa.includes('tecnologo')) {
+         return 7; // Tecnólogo = 7 trimestres
+     }
+     
+     return 4; // Por defecto 4 trimestres
+}
+
+function filtrarTrimestresValidos(trimestres, fichaId = null) {
+     if (!Array.isArray(trimestres)) return [];
+     
+     // Determinar la duración máxima según la ficha
+     let duracionMaxima = 4; // Por defecto
+     
+     if (fichaId && window.fichasListaCompleta) {
+         const ficha = window.fichasListaCompleta.find(f => f.id === fichaId);
+         if (ficha) {
+             duracionMaxima = obtenerDuracionPrograma(ficha);
+         }
+     }
+     
+     // Filtrar trimestres válidos según la duración
+     return trimestres
+         .filter(t => t.numero >= 1 && t.numero <= duracionMaxima)
+         .sort((a, b) => a.numero - b.numero);
 }
 
 // ============================================================
@@ -127,47 +165,82 @@ function cargarRoles() {
 }
 
 function llenarSelectRoles(selectId) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
-    
-    // Limpiar opciones excepto la primera
-    while (select.options.length > 1) {
-        select.remove(1);
-    }
-    
-    window.rolesDisponibles.forEach(rol => {
-        const option = document.createElement('option');
-        option.value = rol.id;
-        option.textContent = rol.nombreRol;
-        select.appendChild(option);
-    });
-}
+     const select = document.getElementById(selectId);
+     if (!select) {
+         console.warn('Select no encontrado:', selectId);
+         return;
+     }
+     
+     console.log('Llenando select:', selectId, 'con roles:', window.rolesDisponibles);
+     
+     // Limpiar opciones excepto la primera
+     while (select.options.length > 1) {
+         select.remove(1);
+     }
+     
+     if (!window.rolesDisponibles || window.rolesDisponibles.length === 0) {
+         console.warn('No hay roles disponibles para llenar', selectId);
+         return;
+     }
+     
+     window.rolesDisponibles.forEach(rol => {
+         const option = document.createElement('option');
+         option.value = rol.id;
+         option.textContent = rol.nombreRol;
+         select.appendChild(option);
+         console.log('Opción añadida:', rol.nombreRol);
+     });
+     
+     console.log('✓ Select llenado:', selectId);
+ }
 
 // ============================================================
 // INICIALIZACIÓN AL CARGAR PÁGINA
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✓ Página cargada');
-    
-    // Cargar tema
-    loadTheme();
-    
-    // Cargar roles primero (es necesario para los selects)
-    try {
-        const rolesPromise = cargarRoles();
-        if (rolesPromise && rolesPromise.then) {
-            rolesPromise.then(() => {
-                console.log('✓ Roles listos para usar');
-            }).catch(error => {
-                console.error('Error: no se pudieron cargar los roles', error);
-            });
-        } else {
-            console.warn('cargarRoles() no devolvió un Promise');
-        }
-    } catch (error) {
-        console.error('Error al cargar roles:', error);
-    }
+     console.log('✓ Página cargada');
+     
+     // Cargar tema
+     loadTheme();
+     
+     // Cargar roles primero (es necesario para los selects)
+     let intentos = 0;
+     const maxIntentos = 5;
+     
+     function intentarCargarRoles() {
+         intentos++;
+         console.log(`Intento ${intentos} de cargar roles...`);
+         
+         try {
+             const rolesPromise = cargarRoles();
+             if (rolesPromise && rolesPromise.then) {
+                 rolesPromise.then(() => {
+                     console.log('✓ Roles listos para usar');
+                     // Rellenar selects después de cargar roles
+                     setTimeout(() => {
+                         llenarSelectRoles('usuarios-rol-filter');
+                         llenarSelectRoles('usuario-rol');
+                         llenarSelectRoles('usuario-rol-edit');
+                     }, 100);
+                 }).catch(error => {
+                     console.error('Error: no se pudieron cargar los roles', error);
+                     if (intentos < maxIntentos) {
+                         setTimeout(intentarCargarRoles, 1000);
+                     }
+                 });
+             } else {
+                 console.warn('cargarRoles() no devolvió un Promise');
+             }
+         } catch (error) {
+             console.error('Error al cargar roles:', error);
+             if (intentos < maxIntentos) {
+                 setTimeout(intentarCargarRoles, 1000);
+             }
+         }
+     }
+     
+     intentarCargarRoles();
     
     // Setup modales
     document.querySelectorAll('.modal').forEach(modal => {

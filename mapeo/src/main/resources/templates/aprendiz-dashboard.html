@@ -76,27 +76,28 @@
         </div>
 
         <div class="main-content">
-            <!-- Header -->
-            <div class="header">
-                <div class="search-box">
-                    <input type="text" id="global-search" placeholder="Buscar...">
-                </div>
-                <div class="header-actions">
-                     <div class="user-profile-header" style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openModal('modal-editar-foto-perfil')" title="Editar foto de perfil">
-                         <div id="user-avatar-container" class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #2196F3; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; overflow: hidden; transition: all 0.3s;">
-                             <img id="user-avatar-img" src="" alt="Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                             <span id="user-initials">?</span>
-                         </div>
-                         <span id="user-name" class="user-name">Usuario</span>
-                     </div>
-                     <button class="btn-icon" onclick="toggleTheme()" title="Tema">
-                         <span class="icon">🌗</span>
-                     </button>
-                     <button class="btn-action btn-danger" onclick="logout()" title="Cerrar sesión">
-                         CERRAR SESIÓN
-                     </button>
+             <!-- Header -->
+             <div class="header">
+                 <div class="search-box">
+                     <input type="text" id="global-search" placeholder="Buscar...">
                  </div>
-            </div>
+                 <img src="/img/logo_sena.png" alt="Logo SENA" style="height: 50px; object-fit: contain; margin: 0 15px;">
+                 <div class="header-actions">
+                      <div class="user-profile-header" style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openModal('modal-editar-foto-perfil')" title="Editar foto de perfil">
+                          <div id="user-avatar-container" class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #2196F3; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; overflow: hidden; transition: all 0.3s;">
+                              <img id="user-avatar-img" src="" alt="Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                              <span id="user-initials">?</span>
+                          </div>
+                          <span id="user-name" class="user-name">Usuario</span>
+                      </div>
+                      <button class="btn-icon" onclick="toggleTheme()" title="Tema">
+                          <span class="icon">🌗</span>
+                      </button>
+                      <button class="btn-action btn-danger" onclick="logout()" title="Cerrar sesión">
+                          CERRAR SESIÓN
+                      </button>
+                  </div>
+             </div>
 
             <!-- Panel de Notificaciones -->
             <div id="notification-panel" class="notification-panel">
@@ -154,17 +155,28 @@
                 <h1>Entregar Entregables</h1>
                 <div class="filters">
                     <input type="text" id="entregables-search" placeholder="Buscar entregable...">
-                    <select id="entregables-filter-estado">
-                        <option value="">Todos</option>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Aprobado">Aprobado</option>
-                        <option value="Devuelto">Devuelto</option>
-                    </select>
                     <button class="btn-primary" onclick="openModal('modal-subir-entregable')">
                         + Subir Entregable
                     </button>
                 </div>
-                <div id="entregables-list" class="table-container"></div>
+                <div id="entregables-list" class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Proyecto</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Archivo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entregables-tbody">
+                            <tr>
+                                <td colspan="5" class="no-data">Cargando entregables...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Mis Calificaciones -->
@@ -179,7 +191,7 @@
             <!-- Mis Grupos (GAES) -->
             <div id="mis-grupos" class="section">
                 <h1>Mis Grupos (GAES)</h1>
-                <button class="btn-primary" onclick="openModal('modal-crear-gaes')">
+                <button id="btn-crear-gaes" class="btn-primary" onclick="openModal('modal-crear-gaes')">
                     + Crear GAES
                 </button>
                 <div id="gaes-list" class="cards-grid"></div>
@@ -328,6 +340,9 @@
                 
                 <label>Correo *</label>
                 <input type="email" id="perfil-correo" required>
+                
+                <label>Nivel de Formación</label>
+                <input type="text" id="perfil-nivel" disabled placeholder="Tu nivel de formación">
                 
                 <div class="modal-actions">
                     <button type="submit" class="btn-primary">Guardar</button>

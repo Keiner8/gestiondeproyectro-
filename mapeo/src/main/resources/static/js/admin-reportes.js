@@ -4,57 +4,90 @@
 let todasLasFichas = [];
 let todosTrimestres = [];
 let todosProyectos = [];
+let usuariosActuales = []; // Almacenar usuarios filtrados actuales
+let usuariosOriginales = []; // Almacenar todos los usuarios
+
+// Cargar XLSX si no está disponible
+function cargarXLSX() {
+    if (typeof XLSX === 'undefined') {
+        console.log('Cargando librería XLSX...');
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js';
+        script.onload = () => {
+            console.log('✓ XLSX cargada correctamente');
+            window.XLSXReady = true;
+        };
+        script.onerror = () => {
+            console.error('Error al cargar XLSX');
+        };
+        document.head.appendChild(script);
+    } else {
+        console.log('✓ XLSX ya estaba disponible');
+        window.XLSXReady = true;
+    }
+}
+
+// Inicializar carga de XLSX cuando el documento esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarXLSX);
+} else {
+    cargarXLSX();
+}
 
 // ============================================================
 // REPORTE DE USUARIOS
 // ============================================================
 
 async function cargarReporteUsuarios() {
-    try {
-        console.log('🔄 Cargando reporte de usuarios...');
-        const response = await fetch('/api/reportes/administrador/usuarios-general');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const usuarios = await response.json();
-        
-        console.log('✅ Usuarios recibidos:', usuarios);
-        console.log('📊 Total de usuarios:', usuarios ? usuarios.length : 0);
-        
-        if (!usuarios || usuarios.length === 0) {
-            document.getElementById('reporte-usuarios-list').innerHTML = '<p style="color: orange;">No hay usuarios disponibles</p>';
-            return;
-        }
-        
-        // Llamar a filtrarReporteUsuarios que se encargará de mostrar la tabla
-        console.log('📝 Llamando filtrarReporteUsuarios...');
-        filtrarReporteUsuarios(usuarios);
-    } catch (error) {
-        console.error('❌ Error cargando reporte de usuarios:', error);
-        const container = document.getElementById('reporte-usuarios-list');
-        if (container) {
-            container.innerHTML = '<p style="color: red;">Error al cargar reporte: ' + error.message + '</p>';
-        }
-    }
-}
+     try {
+         console.log('🔄 Cargando reporte de usuarios...');
+         const response = await fetch('/api/reportes/administrador/usuarios-general');
+         
+         if (!response.ok) {
+             throw new Error(`HTTP error! status: ${response.status}`);
+         }
+         
+         const usuarios = await response.json();
+         
+         console.log('✅ Usuarios recibidos:', usuarios);
+         console.log('📊 Total de usuarios:', usuarios ? usuarios.length : 0);
+         
+         if (!usuarios || usuarios.length === 0) {
+             document.getElementById('reporte-usuarios-list').innerHTML = '<p style="color: orange;">No hay usuarios disponibles</p>';
+             return;
+         }
+         
+         // Guardar usuarios originales y actuales
+         usuariosOriginales = usuarios;
+         usuariosActuales = usuarios;
+         
+         // Llamar a filtrarReporteUsuarios que se encargará de mostrar la tabla
+         console.log('📝 Llamando filtrarReporteUsuarios...');
+         filtrarReporteUsuarios(usuarios);
+     } catch (error) {
+         console.error('❌ Error cargando reporte de usuarios:', error);
+         const container = document.getElementById('reporte-usuarios-list');
+         if (container) {
+             container.innerHTML = '<p style="color: red;">Error al cargar reporte: ' + error.message + '</p>';
+         }
+     }
+ }
 
 function filtrarReporteUsuarios(usuarios) {
-    console.log('filtrarReporteUsuarios llamado con', usuarios ? usuarios.length : 0, 'usuarios');
-    
-    // Buscar elementos con validación
-    const searchInput = document.getElementById('usuarios-search');
-    const rolFilter = document.getElementById('usuarios-rol-filter');
-    const estadoFilter = document.getElementById('usuarios-estado-filter');
-    
-    if (!searchInput || !rolFilter || !estadoFilter) {
-        console.error('No se encontraron los elementos de filtro');
-        console.log('searchInput:', searchInput);
-        console.log('rolFilter:', rolFilter);
-        console.log('estadoFilter:', estadoFilter);
-        return;
-    }
+     console.log('filtrarReporteUsuarios llamado con', usuarios ? usuarios.length : 0, 'usuarios');
+     
+     // Buscar elementos con validación - usar IDs del reporte
+     const searchInput = document.getElementById('reporte-usuarios-search');
+     const rolFilter = document.getElementById('reporte-usuarios-rol-filter');
+     const estadoFilter = document.getElementById('reporte-usuarios-estado-filter');
+     
+     if (!searchInput || !rolFilter || !estadoFilter) {
+         console.error('No se encontraron los elementos de filtro');
+         console.log('searchInput:', searchInput);
+         console.log('rolFilter:', rolFilter);
+         console.log('estadoFilter:', estadoFilter);
+         return;
+     }
     
     // Llenar opciones de rol
     const roles = [...new Set(usuarios.map(u => u.rol))].filter(r => r); // filtrar null/undefined
@@ -83,18 +116,20 @@ function filtrarReporteUsuarios(usuarios) {
         });
         
         console.log('Mostrando', filtrados.length, 'usuarios después de filtrar');
+        usuariosActuales = filtrados; // Actualizar usuarios actuales con los filtrados
         cargarTablaUsuarios(filtrados);
-    };
+        };
     
     // Mostrar la tabla inicial CON TODOS los usuarios
     console.log('Mostrando tabla inicial con', usuarios.length, 'usuarios');
+    usuariosActuales = usuarios;
     cargarTablaUsuarios(usuarios);
     
     // Agregar listeners para filtros
     searchInput.addEventListener('input', aplicarFiltros);
     rolFilter.addEventListener('change', aplicarFiltros);
     estadoFilter.addEventListener('change', aplicarFiltros);
-}
+    }
 
 function cargarTablaUsuarios(usuarios) {
     let html = '<table class="table"><thead><tr>';
@@ -122,19 +157,25 @@ function cargarTablaUsuarios(usuarios) {
 // ============================================================
 
 async function cargarReporteFichas() {
-    try {
-        console.log('🔄 Cargando reporte de fichas...');
-        const response = await fetch('/api/reportes/administrador/fichas-aprendices');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const fichas = await response.json();
-        
-        console.log('✅ Fichas recibidas:', fichas);
-        console.log('📊 Total de fichas:', fichas ? fichas.length : 0);
-        todasLasFichas = fichas;
+     try {
+         console.log('🔄 Cargando reporte de fichas...');
+         const response = await fetchWithAuth('/api/reportes/administrador/fichas-aprendices');
+         
+         if (!response.ok) {
+             throw new Error(`HTTP error! status: ${response.status}`);
+         }
+         
+         const fichas = await response.json();
+         
+         console.log('✅ Fichas recibidas:', fichas);
+         console.log('📊 Total de fichas:', fichas ? fichas.length : 0);
+         
+         if (!fichas || fichas.length === 0) {
+             document.getElementById('reporte-fichas-list').innerHTML = '<p style="color: orange;">No hay fichas con aprendices disponibles</p>';
+             return;
+         }
+         
+         todasLasFichas = fichas;
         
         // Llenar selector con fichas únicas
         const selectFichas = document.getElementById('fichas-selector');
@@ -167,79 +208,81 @@ async function cargarReporteFichas() {
 }
 
 function mostrarFichas(fichas) {
-    let html = '<table class="table"><thead><tr>';
-    html += '<th>Código Ficha</th><th>Programa</th><th>Jornada</th><th>Modalidad</th><th>Aprendiz</th><th>Documento</th>';
-    html += '</tr></thead><tbody>';
-    
-    if (fichas.length === 0) {
-        html += '<tr><td colspan="6">No hay datos disponibles</td></tr>';
-    } else {
-        fichas.forEach(f => {
-            html += '<tr>';
-            html += `<td><strong>${f.codigo_ficha}</strong></td>`;
-            html += `<td>${f.programa_formacion}</td>`;
-            html += `<td>${f.jornada}</td>`;
-            html += `<td>${f.modalidad}</td>`;
-            html += `<td>${f.aprendiz}</td>`;
-            html += `<td>${f.numero_documento}</td>`;
-            html += '</tr>';
-        });
-    }
-    
-    html += '</tbody></table>';
-    document.getElementById('reporte-fichas-list').innerHTML = html;
-}
+     let html = '<table class="table"><thead><tr>';
+     html += '<th>Código Ficha</th><th>Programa</th><th>Jornada</th><th>Modalidad</th><th>Aprendiz</th><th>Documento</th><th>Estado Aprendiz</th><th>Estado Ficha</th>';
+     html += '</tr></thead><tbody>';
+     
+     if (fichas.length === 0) {
+         html += '<tr><td colspan="8">No hay datos disponibles</td></tr>';
+     } else {
+         fichas.forEach(f => {
+             html += '<tr>';
+             html += `<td><strong>${f.codigo_ficha || 'N/A'}</strong></td>`;
+             html += `<td>${f.programa_formacion || 'N/A'}</td>`;
+             html += `<td>${f.jornada || 'N/A'}</td>`;
+             html += `<td>${f.modalidad || 'N/A'}</td>`;
+             html += `<td>${f.aprendiz || 'Sin Aprendiz'}</td>`;
+             html += `<td>${f.tipo_documento || ''} ${f.numero_documento || 'N/A'}</td>`;
+             html += `<td><span class="badge ${f.estado_aprendiz === 'ACTIVO' ? 'badge-success' : 'badge-danger'}">${f.estado_aprendiz || 'N/A'}</span></td>`;
+             html += `<td><span class="badge ${f.estado_ficha === 'ACTIVO' ? 'badge-success' : f.estado_ficha === 'INACTIVO' ? 'badge-danger' : 'badge-warning'}">${f.estado_ficha || 'N/A'}</span></td>`;
+             html += '</tr>';
+         });
+     }
+     
+     html += '</tbody></table>';
+     document.getElementById('reporte-fichas-list').innerHTML = html;
+ }
 
 function filtrarPorFicha() {
-    console.log('filtrarPorFicha llamado');
-    const fichaSeleccionada = document.getElementById('fichas-selector')?.value || '';
-    const searchTerm = document.getElementById('fichas-search')?.value.toLowerCase() || '';
-    const estadoSeleccionado = document.getElementById('fichas-estado-filter')?.value || '';
-    
-    console.log('Ficha seleccionada:', fichaSeleccionada);
-    console.log('Búsqueda:', searchTerm);
-    console.log('Estado:', estadoSeleccionado);
-    console.log('Total de fichas en array:', todasLasFichas ? todasLasFichas.length : 0);
-    
-    // Validar que todasLasFichas tiene datos
-    if (!todasLasFichas || todasLasFichas.length === 0) {
-        console.error('No hay fichas cargadas en todasLasFichas');
-        mostrarFichas([]);
-        return;
-    }
-    
-    let filtrados = [...todasLasFichas]; // Crear una copia
-    
-    if (fichaSeleccionada && fichaSeleccionada.trim() !== '') {
-        console.log('Filtrando por ficha:', fichaSeleccionada);
-        console.log('Fichas disponibles:', todasLasFichas.map(f => f.codigo_ficha));
-        
-        filtrados = filtrados.filter(f => {
-            const match = f.codigo_ficha === fichaSeleccionada;
-            console.log(`Comparando "${f.codigo_ficha}" === "${fichaSeleccionada}": ${match}`);
-            return match;
-        });
-        console.log('Después de filtrar por ficha:', filtrados.length);
-    }
-    
-    if (searchTerm && searchTerm.trim() !== '') {
-        filtrados = filtrados.filter(f =>
-            String(f.codigo_ficha).toLowerCase().includes(searchTerm) ||
-            String(f.programa_formacion).toLowerCase().includes(searchTerm) ||
-            String(f.aprendiz).toLowerCase().includes(searchTerm)
-        );
-        console.log('Después de búsqueda:', filtrados.length);
-    }
-    
-    if (estadoSeleccionado && estadoSeleccionado.trim() !== '') {
-        filtrados = filtrados.filter(f => f.estado === estadoSeleccionado);
-        console.log('Después de filtrar por estado:', filtrados.length);
-    }
-    
-    console.log('Mostrando:', filtrados.length, 'registros');
-    console.log('Datos a mostrar:', filtrados);
-    mostrarFichas(filtrados);
-}
+     console.log('filtrarPorFicha llamado');
+     const fichaSeleccionada = document.getElementById('fichas-selector')?.value || '';
+     const searchTerm = document.getElementById('fichas-search')?.value.toLowerCase() || '';
+     const estadoSeleccionado = document.getElementById('fichas-estado-filter')?.value || '';
+     
+     console.log('Ficha seleccionada:', fichaSeleccionada);
+     console.log('Búsqueda:', searchTerm);
+     console.log('Estado:', estadoSeleccionado);
+     console.log('Total de fichas en array:', todasLasFichas ? todasLasFichas.length : 0);
+     
+     // Validar que todasLasFichas tiene datos
+     if (!todasLasFichas || todasLasFichas.length === 0) {
+         console.error('No hay fichas cargadas en todasLasFichas');
+         mostrarFichas([]);
+         return;
+     }
+     
+     let filtrados = [...todasLasFichas]; // Crear una copia
+     
+     if (fichaSeleccionada && fichaSeleccionada.trim() !== '') {
+         console.log('Filtrando por ficha:', fichaSeleccionada);
+         console.log('Fichas disponibles:', todasLasFichas.map(f => f.codigo_ficha));
+         
+         filtrados = filtrados.filter(f => {
+             const match = f.codigo_ficha === fichaSeleccionada;
+             console.log(`Comparando "${f.codigo_ficha}" === "${fichaSeleccionada}": ${match}`);
+             return match;
+         });
+         console.log('Después de filtrar por ficha:', filtrados.length);
+     }
+     
+     if (searchTerm && searchTerm.trim() !== '') {
+         filtrados = filtrados.filter(f =>
+             String(f.codigo_ficha).toLowerCase().includes(searchTerm) ||
+             String(f.programa_formacion).toLowerCase().includes(searchTerm) ||
+             String(f.aprendiz).toLowerCase().includes(searchTerm)
+         );
+         console.log('Después de búsqueda:', filtrados.length);
+     }
+     
+     if (estadoSeleccionado && estadoSeleccionado.trim() !== '') {
+         filtrados = filtrados.filter(f => f.estado_ficha === estadoSeleccionado);
+         console.log('Después de filtrar por estado:', filtrados.length);
+     }
+     
+     console.log('Mostrando:', filtrados.length, 'registros');
+     console.log('Datos a mostrar:', filtrados);
+     mostrarFichas(filtrados);
+ }
 
 // ============================================================
 // REPORTE DE INSTRUCTORES
@@ -522,46 +565,62 @@ function getEstadoBadge(estado) {
 // ============================================================
 
 async function descargarReporteUsuariosPDF() {
-    try {
-        const response = await fetch('/api/reportes/descargar/usuarios/pdf');
-        if (!response.ok) throw new Error('Error al descargar PDF');
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'reporte-usuarios.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        mostrarNotificacionGlobal('PDF descargado exitosamente', 'success');
-    } catch (error) {
-        mostrarNotificacionGlobal('Error al descargar PDF: ' + error.message, 'error');
-    }
-}
+     try {
+         const response = await fetch('/api/reportes/descargar/usuarios/pdf');
+         if (!response.ok) throw new Error('Error al descargar PDF');
+         
+         const blob = await response.blob();
+         const url = window.URL.createObjectURL(blob);
+         const a = document.createElement('a');
+         a.href = url;
+         a.download = 'reporte-usuarios.pdf';
+         document.body.appendChild(a);
+         a.click();
+         window.URL.revokeObjectURL(url);
+         document.body.removeChild(a);
+         
+         mostrarNotificacionGlobal('PDF descargado exitosamente', 'success');
+     } catch (error) {
+         mostrarNotificacionGlobal('Error al descargar PDF: ' + error.message, 'error');
+     }
+ }
 
 async function descargarReporteUsuariosExcel() {
-    try {
-        const response = await fetch('/api/reportes/descargar/usuarios/excel');
-        if (!response.ok) throw new Error('Error al descargar Excel');
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'reporte-usuarios.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        mostrarNotificacionGlobal('Excel descargado exitosamente', 'success');
-    } catch (error) {
-        mostrarNotificacionGlobal('Error al descargar Excel: ' + error.message, 'error');
-    }
-}
+     try {
+         console.log('Descargando Excel con Apache POI desde servidor...');
+         console.log('Usuarios a descargar:', usuariosActuales.length);
+         
+         // Llamar al endpoint del servidor que genera el Excel con Apache POI
+         const response = await fetch('/api/reportes/administrador/descargar-usuarios-excel', {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
+             },
+             body: JSON.stringify(usuariosActuales)
+         });
+         
+         if (!response.ok) {
+             throw new Error(`Error ${response.status}: ${response.statusText}`);
+         }
+         
+         // Obtener el archivo como blob
+         const blob = await response.blob();
+         const url = window.URL.createObjectURL(blob);
+         const link = document.createElement('a');
+         link.href = url;
+         link.download = 'reporte-usuarios.xlsx';
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+         window.URL.revokeObjectURL(url);
+         
+         mostrarNotificacionGlobal('Excel descargado exitosamente', 'success');
+     } catch (error) {
+         console.error('Error al descargar Excel:', error);
+         mostrarNotificacionGlobal('Error al descargar Excel: ' + error.message, 'error');
+     }
+ }
 
 async function descargarReporteFichasPDF() {
     try {

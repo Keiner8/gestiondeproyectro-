@@ -22,11 +22,19 @@ public class GaesController {
     
     // CREATE - Crear nuevo GAES
     @PostMapping
-    public ResponseEntity<Gaes> crearGaes(@RequestBody Gaes gaes) {
+    public ResponseEntity<?> crearGaes(@RequestBody Gaes gaes) {
+        // Validar que tenga nombre
+        if (gaes.getNombre() == null || gaes.getNombre().trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "El nombre del GAES es requerido"));
+        }
+        
         // Validar que no exista un GAES con el mismo nombre
         if (gaesService.existeGaesConNombre(gaes.getNombre())) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Ya existe un GAES con ese nombre"));
         }
+        
         Gaes nuevoGaes = gaesService.crearGaes(gaes);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoGaes);
     }
@@ -60,6 +68,13 @@ public class GaesController {
         return ResponseEntity.ok(gaesList);
     }
     
+    // READ - Obtener todos los GAES con integrantes (DTO)
+    @GetMapping("/con-integrantes/todos")
+    public ResponseEntity<List<GaesDTO>> obtenerTodosGaesConIntegrantes() {
+        List<GaesDTO> gaesList = gaesService.obtenerTodosGaesConIntegrantesDTO();
+        return ResponseEntity.ok(gaesList);
+    }
+    
     // READ - Obtener GAES activos por ficha
     @GetMapping("/ficha/{fichaId}/activos")
     public ResponseEntity<List<Gaes>> obtenerGaesActivosPorFicha(@PathVariable Integer fichaId) {
@@ -71,6 +86,13 @@ public class GaesController {
     @GetMapping("/ficha/{fichaId}")
     public ResponseEntity<List<Gaes>> obtenerGaesPorFicha(@PathVariable Integer fichaId) {
         List<Gaes> gaesList = gaesService.obtenerGaesPorFicha(fichaId);
+        return ResponseEntity.ok(gaesList);
+    }
+    
+    // READ - Obtener GAES por ficha con integrantes (DTO)
+    @GetMapping("/ficha/{fichaId}/con-integrantes")
+    public ResponseEntity<List<GaesDTO>> obtenerGaesPorFichaConIntegrantes(@PathVariable Integer fichaId) {
+        List<GaesDTO> gaesList = gaesService.obtenerGaesPorFichaConIntegrantesDTO(fichaId);
         return ResponseEntity.ok(gaesList);
     }
     

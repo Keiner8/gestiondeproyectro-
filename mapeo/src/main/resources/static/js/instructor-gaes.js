@@ -9,26 +9,26 @@ let gaesListaInstructor = [];
 // ============================================================
 
 function cargarGaesInstructor() {
-    const fichaId = instructorData.instructor?.fichaId;
-    
-    if (!fichaId) {
-        document.getElementById('gaes-list').innerHTML = '<p>No tienes ficha asignada</p>';
-        return;
-    }
-    
-    fetchWithAuth(`/api/gaes?fichaId=${fichaId}`)
-        .then(response => {
-            if (!response.ok) throw new Error('Error al cargar GAES');
-            return response.json();
-        })
-        .then(data => {
-            gaesListaInstructor = data.filter(g => g.fichaId == fichaId);
-            mostrarGaesInstructor();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('gaes-list').innerHTML = '<p>Error al cargar GAES</p>';
-        });
+     const fichaId = instructorData.instructor?.fichaId;
+     
+     if (!fichaId) {
+         document.getElementById('gaes-list').innerHTML = '<p>No tienes ficha asignada</p>';
+         return;
+     }
+     
+     fetchWithAuth(`/api/gaes/ficha/${fichaId}/con-integrantes`)
+         .then(response => {
+             if (!response.ok) throw new Error('Error al cargar GAES');
+             return response.json();
+         })
+         .then(data => {
+             gaesListaInstructor = data;
+             mostrarGaesInstructor();
+         })
+         .catch(error => {
+             console.error('Error:', error);
+             document.getElementById('gaes-list').innerHTML = '<p>Error al cargar GAES</p>';
+         });
 }
 
 function mostrarGaesInstructor() {
@@ -59,13 +59,16 @@ function mostrarGaesInstructor() {
             : '<span class="badge badge-danger">INACTIVO</span>';
         
         const integrantes = gae.integrantes ? gae.integrantes.length : 0;
+        const integrantesBtn = integrantes > 0 
+            ? `<button class="btn-secondary btn-sm" onclick="verIntegrantesGaesInstructor(${gae.id})">${integrantes} integrante${integrantes !== 1 ? 's' : ''}</button>`
+            : '<span style="color: #999;">Sin integrantes</span>';
         
         html += `
             <tr>
                 <td>${gae.id}</td>
                 <td>${gae.nombre}</td>
                 <td>${estadoBadge}</td>
-                <td>${integrantes}</td>
+                <td>${integrantesBtn}</td>
                 <td class="acciones">
                     <button class="btn-action btn-primary" onclick="abrirAgregarAprendicesGaes(${gae.id})" title="Agregar Aprendices">AGREGAR APRENDICES</button>
                     <button class="btn-action btn-danger" onclick="eliminarGaesInstructor(${gae.id})" title="Eliminar">ELIMINAR</button>
@@ -252,6 +255,79 @@ function eliminarGaesInstructor(gaesId) {
     .catch(error => {
         console.error('Error:', error);
         alert('Error: ' + error.message);
+    });
+}
+
+// ============================================================
+// VER INTEGRANTES DEL GAES
+// ============================================================
+
+function verIntegrantesGaesInstructor(gaesId) {
+    // Encontrar el GAES en la lista
+    const gaes = gaesListaInstructor.find(g => g.id === gaesId);
+    
+    if (!gaes) {
+        alert('No se encontró el GAES');
+        return;
+    }
+    
+    if (!gaes.integrantes || gaes.integrantes.length === 0) {
+        alert('Este GAES no tiene integrantes');
+        return;
+    }
+    
+    console.log('Mostrando integrantes del GAES:', gaes.nombre);
+    console.log('Integrantes:', gaes.integrantes);
+    
+    // Actualizar el titulo del modal
+    document.getElementById('integrantes-gaes-titulo').textContent = `Integrantes - ${gaes.nombre}`;
+    
+    // Limpiar la tabla
+    const tbody = document.getElementById('integrantes-gaes-tbody');
+    tbody.innerHTML = '';
+    
+    // Llenar la tabla con los integrantes
+    gaes.integrantes.forEach(integrante => {
+        const tr = document.createElement('tr');
+        const nombre = integrante.usuarioNombre || integrante.nombre || 'N/A';
+        const correo = integrante.usuarioCorreo || integrante.correo || 'N/A';
+        const esLider = integrante.esLider ? '👑 Líder' : 'Miembro';
+        
+        tr.innerHTML = `
+            <td>${nombre}</td>
+            <td>${correo}</td>
+            <td>${esLider}</td>
+            <td>
+                <button class="btn-secondary btn-sm" onclick="removerIntegrantesGaes(${integrante.id}, ${gaesId})">
+                    Remover
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    // Abrir el modal
+    openModal('modal-ver-integrantes-gaes');
+}
+
+// Remover integrante del GAES
+function removerIntegrantesGaes(aprendizId, gaesId) {
+    if (!confirm('¿Estás seguro de que deseas remover este aprendiz del GAES?')) {
+        return;
+    }
+    
+    fetchWithAuth(`/api/aprendices/${aprendizId}/gaes/${gaesId}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al remover aprendiz');
+        alert('Aprendiz removido del GAES exitosamente');
+        cargarGaesInstructor();
+        closeModal('modal-ver-integrantes-gaes');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al remover aprendiz: ' + error.message);
     });
 }
 

@@ -12,15 +12,27 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .register-container {
+             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+             background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
+             min-height: 100vh;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             position: relative;
+         }
+         
+         body::before {
+             content: '';
+             position: fixed;
+             top: 20px;
+             left: 20px;
+             width: 120px;
+             height: 120px;
+             background: url('/img/logo_sena.png') center/contain no-repeat;
+             z-index: 1000;
+         }
+
+         .register-container {
             background: white;
             padding: 40px;
             border-radius: 10px;
@@ -148,26 +160,60 @@
         }
         
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+         }
+         
+         .doc-status-btn {
+             position: absolute;
+             right: 8px;
+             top: 50%;
+             transform: translateY(-50%);
+             width: 20px;
+             height: 20px;
+             border-radius: 50%;
+             border: none;
+             font-size: 11px;
+             font-weight: bold;
+             cursor: not-allowed;
+             transition: all 0.3s ease;
+             background: #f0f0f0;
+             color: #666;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             padding: 0;
+         }
+         
+         .doc-status-invalid {
+             background: #dc3545 !important;
+             color: #fff !important;
+             border-color: #c82333 !important;
+         }
+         
+         .doc-status-valid {
+             background: #28a745 !important;
+             color: #fff !important;
+             border-color: #1e7e34 !important;
+             cursor: default !important;
+         }
     </style>
 </head>
 <body>
     <div class="register-container">
-        <img src="/img/logo2.png" alt="Logo 2" class="logo-top-right">
-        <h1 style="text-align: center; color: #000; margin-bottom: 30px; font-size: 24px;">Registrarse</h1>
+         <img src="/img/logo2.png" alt="Logo 2" class="logo-top-right">
+         <h1 style="text-align: center; color: #000; margin-bottom: 30px; font-size: 24px;">Registrarse</h1>
         
         <div class="error-message" id="errorMessage"></div>
         <div class="success-message" id="successMessage"></div>
         
         <div style="margin-bottom: 25px;">
-             <label style="display: block; margin-bottom: 12px; color: #000; font-weight: 500; text-align: center;">¿Qué tipo de usuario eres?</label>
+             <label style="display: block; margin-bottom: 12px; color: #000; font-weight: 500; text-align: center; font-size: 16px;">¿Qué tipo de usuario eres?</label>
              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                 <button type="button" class="role-btn" data-role="3" style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s;" onclick="selectRole(3)">
+                 <button type="button" class="role-btn" data-role="3" style="flex: 1; min-width: 100px; padding: 16px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s; font-size: 16px;" onclick="selectRole(3)">
                      👨‍🎓 Aprendiz
                  </button>
-                 <button type="button" class="role-btn" data-role="2" style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s;" onclick="selectRole(2)">
+                 <button type="button" class="role-btn" data-role="2" style="flex: 1; min-width: 100px; padding: 16px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: #000; transition: all 0.3s; font-size: 16px;" onclick="selectRole(2)">
                      👨‍🏫 Instructor
                  </button>
              </div>
@@ -202,9 +248,15 @@
             </div>
             
             <div class="form-group">
-                <label for="numeroDocumento">Número de Documento</label>
-                <input type="text" id="numeroDocumento" name="numeroDocumento" placeholder="1234567890" required>
-            </div>
+                 <label for="numeroDocumento">Número de Documento (8-10 dígitos)</label>
+                 <div style="position: relative;">
+                     <input type="text" id="numeroDocumento" name="numeroDocumento" placeholder="1234567890" required minlength="8" maxlength="10" pattern="\d{8,10}" title="Debe contener entre 8 y 10 dígitos" oninput="validateDocumentoNumber()" style="padding-right: 35px;">
+                     <button type="button" id="docStatusBtn" class="doc-status-btn doc-status-invalid" disabled title="Ingresa entre 8 y 10 dígitos">
+                         ✗
+                     </button>
+                 </div>
+                 <small id="docErrorMsg" style="color: #dc3545; display: none; margin-top: 5px;"></small>
+             </div>
             
             <div class="form-group">
                 <label for="password">Contraseña</label>
@@ -252,10 +304,10 @@
             </button>
             
             <p style="text-align: center; margin-top: 20px; color: #000;">
-                ¿Ya tienes cuenta? <a href="/login" style="color: #667eea; text-decoration: none; font-weight: 600;">Inicia sesión</a>
-            </p>
-        </form>
-    </div>
+                 ¿Ya tienes cuenta? <a href="/login" style="color: #667eea; text-decoration: none; font-weight: 600;">Inicia sesión</a>
+             </p>
+            </form>
+            </div>
     
     <script>
         function togglePassword(inputId) {
@@ -278,23 +330,55 @@
             ).join(' ');
         }
         
-        function validatePassword() {
-            const password = document.getElementById('password').value;
-            
-            // Validaciones
-            const hasLength = password.length >= 8;
-            const hasUpper = /[A-Z]/.test(password);
-            const hasLower = /[a-z]/.test(password);
-            const hasNumber = /[0-9]/.test(password);
-            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-            
-            // Actualizar indicadores
-            updateRequirement('req-length', hasLength);
-            updateRequirement('req-upper', hasUpper);
-            updateRequirement('req-lower', hasLower);
-            updateRequirement('req-number', hasNumber);
-            updateRequirement('req-special', hasSpecial);
-        }
+        function validateDocumentoNumber() {
+             const numeroDocumento = document.getElementById('numeroDocumento').value;
+             const docErrorMsg = document.getElementById('docErrorMsg');
+             const docStatusBtn = document.getElementById('docStatusBtn');
+             
+             // Solo permitir dígitos
+             const soloDigitos = numeroDocumento.replace(/\D/g, '');
+             document.getElementById('numeroDocumento').value = soloDigitos;
+             
+             if (soloDigitos.length < 8) {
+                 docErrorMsg.textContent = 'Mínimo 8 dígitos requeridos';
+                 docErrorMsg.style.display = 'block';
+                 docStatusBtn.textContent = '✗';
+                 docStatusBtn.classList.remove('doc-status-valid');
+                 docStatusBtn.classList.add('doc-status-invalid');
+                 docStatusBtn.title = 'Número de documento inválido (mínimo 8 dígitos)';
+             } else if (soloDigitos.length > 10) {
+                 docErrorMsg.textContent = 'Máximo 10 dígitos permitidos';
+                 docErrorMsg.style.display = 'block';
+                 docStatusBtn.textContent = '✗';
+                 docStatusBtn.classList.remove('doc-status-valid');
+                 docStatusBtn.classList.add('doc-status-invalid');
+                 docStatusBtn.title = 'Número de documento inválido (máximo 10 dígitos)';
+             } else {
+                 docErrorMsg.style.display = 'none';
+                 docStatusBtn.textContent = '✓';
+                 docStatusBtn.classList.remove('doc-status-invalid');
+                 docStatusBtn.classList.add('doc-status-valid');
+                 docStatusBtn.title = 'Número de documento válido';
+             }
+         }
+         
+         function validatePassword() {
+             const password = document.getElementById('password').value;
+             
+             // Validaciones
+             const hasLength = password.length >= 8;
+             const hasUpper = /[A-Z]/.test(password);
+             const hasLower = /[a-z]/.test(password);
+             const hasNumber = /[0-9]/.test(password);
+             const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+             
+             // Actualizar indicadores
+             updateRequirement('req-length', hasLength);
+             updateRequirement('req-upper', hasUpper);
+             updateRequirement('req-lower', hasLower);
+             updateRequirement('req-number', hasNumber);
+             updateRequirement('req-special', hasSpecial);
+         }
         
         function updateRequirement(elementId, isValid) {
             const element = document.getElementById(elementId);
@@ -344,6 +428,13 @@
             
             if (!rolId || rolId === '') {
                 errorDiv.textContent = 'Debes seleccionar un tipo de usuario';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Validar número de documento
+            if (numeroDocumento.length < 8 || numeroDocumento.length > 10 || !/^\d+$/.test(numeroDocumento)) {
+                errorDiv.textContent = 'El número de documento debe contener entre 8 y 10 dígitos';
                 errorDiv.style.display = 'block';
                 return;
             }

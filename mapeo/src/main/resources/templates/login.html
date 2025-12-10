@@ -12,15 +12,27 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .login-container {
+             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+             background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
+             min-height: 100vh;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             position: relative;
+         }
+         
+         body::before {
+             content: '';
+             position: fixed;
+             top: 20px;
+             left: 20px;
+             width: 120px;
+             height: 120px;
+             background: url('/img/logo_sena.png') center/contain no-repeat;
+             z-index: 1000;
+         }
+
+         .login-container {
             background: white;
             padding: 40px;
             border-radius: 10px;
@@ -192,13 +204,13 @@
                  <span class="spinner" id="spinner"></span>
              </button>
              
-             <p style="text-align: center; margin-top: 20px; color: #000;">
-                 ¿No tienes cuenta? <a href="/register" style="color: #667eea; text-decoration: none; font-weight: 600;">Registrate</a>
+             <p style="text-align: center; margin-top: 20px; color: #000; font-size: 16px;">
+                 ¿No tienes cuenta? <a href="/register" style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 18px;">Registrate</a>
              </p>
-         </form>
-         
+             </form>
+             
 
-     </div>
+             </div>
      
      <script>
         function togglePassword(inputId) {

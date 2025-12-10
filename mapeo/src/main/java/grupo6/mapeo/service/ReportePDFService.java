@@ -9,6 +9,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -29,16 +30,69 @@ public class ReportePDFService {
         PdfWriter.getInstance(document, baos);
         document.open();
         
-        // Agregar logo
+        // Tabla para logos lado a lado
+        PdfPTable tablaLogos = new PdfPTable(2);
+        tablaLogos.setWidthPercentage(100);
+        tablaLogos.setSpacingAfter(10);
+        
+        // Logo 1 (logo2.png)
+        boolean logo1Added = false;
         try {
-            InputStream logoStream = resourceLoader.getResource("classpath:static/img/logo2.png").getInputStream();
-            Image logo = Image.getInstance(readInputStream(logoStream));
-            logo.scaleToFit(100, 100);
-            logo.setAlignment(Element.ALIGN_CENTER);
-            document.add(logo);
+            // Intentar cargar desde clase
+            InputStream logoStream = this.getClass().getClassLoader()
+                    .getResourceAsStream("static/img/logo2.png");
+            if (logoStream != null) {
+                Image logo = Image.getInstance(readInputStream(logoStream));
+                logo.scaleToFit(100, 100);
+                PdfPCell cellLogo1 = new PdfPCell(logo);
+                cellLogo1.setHorizontalAlignment(Element.ALIGN_CENTER);
+                cellLogo1.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                cellLogo1.setBorder(PdfPCell.NO_BORDER);
+                cellLogo1.setPadding(5);
+                tablaLogos.addCell(cellLogo1);
+                logo1Added = true;
+                System.out.println("✓ Logo2 cargado exitosamente");
+            }
         } catch (Exception e) {
-            System.out.println("Logo no encontrado, continuando sin logo: " + e.getMessage());
+            System.out.println("✗ Error cargando logo2: " + e.getMessage());
+            e.printStackTrace();
         }
+        
+        if (!logo1Added) {
+            PdfPCell cellVacia = new PdfPCell(new Phrase(""));
+            cellVacia.setBorder(PdfPCell.NO_BORDER);
+            tablaLogos.addCell(cellVacia);
+        }
+        
+        // Logo 2 (logo_sena.png)
+        boolean logo2Added = false;
+        try {
+            InputStream logoStream = this.getClass().getClassLoader()
+                    .getResourceAsStream("static/img/logo_sena.png");
+            if (logoStream != null) {
+                Image logo = Image.getInstance(readInputStream(logoStream));
+                logo.scaleToFit(100, 100);
+                PdfPCell cellLogo2 = new PdfPCell(logo);
+                cellLogo2.setHorizontalAlignment(Element.ALIGN_CENTER);
+                cellLogo2.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                cellLogo2.setBorder(PdfPCell.NO_BORDER);
+                cellLogo2.setPadding(5);
+                tablaLogos.addCell(cellLogo2);
+                logo2Added = true;
+                System.out.println("✓ Logo SENA cargado exitosamente");
+            }
+        } catch (Exception e) {
+            System.out.println("✗ Error cargando logo_sena: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        if (!logo2Added) {
+            PdfPCell cellVacia = new PdfPCell(new Phrase(""));
+            cellVacia.setBorder(PdfPCell.NO_BORDER);
+            tablaLogos.addCell(cellVacia);
+        }
+        
+        document.add(tablaLogos);
         
         // Espaciador
         document.add(new Paragraph(" "));

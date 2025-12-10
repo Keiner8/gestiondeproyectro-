@@ -55,10 +55,12 @@ public class ReporteAdministradorService {
                 "f.modalidad, " +
                 "CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) AS aprendiz, " +
                 "COALESCE(u.numero_documento, 'N/A') AS numero_documento, " +
-                "COALESCE(f.estado, 'ACTIVO') AS estado " +
+                "COALESCE(u.tipo_documento, 'N/A') AS tipo_documento, " +
+                "COALESCE(a.estado, 'ACTIVO') AS estado_aprendiz, " +
+                "COALESCE(f.estado, 'ACTIVO') AS estado_ficha " +
                 "FROM ficha f " +
-                "INNER JOIN aprendiz a ON a.ficha_id = f.id " +
-                "INNER JOIN usuario u ON u.id = a.usuario_id " +
+                "LEFT JOIN aprendiz a ON a.ficha_id = f.id " +
+                "LEFT JOIN usuario u ON u.id = a.usuario_id " +
                 "ORDER BY f.codigo_ficha, aprendiz";
         return jdbcTemplate.queryForList(sql);
     }

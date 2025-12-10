@@ -11,19 +11,15 @@ let trimestresLista = [];
 // ============================================================
 
 function cargarProyectosInstructor() {
-    const fichaId = instructorData.instructor?.fichaId;
-    
-    if (!fichaId) {
-        console.log('No hay ficha asignada');
-        return;
-    }
+    console.log('Cargando proyectos del instructor...');
     
     // Cargar todos los proyectos
     fetch('/api/proyectos')
         .then(response => response.json())
         .then(data => {
-            // Filtrar solo proyectos de aprendices en la ficha del instructor
+            // Mostrar todos los proyectos disponibles
             proyectosInstructor = data;
+            console.log('Proyectos cargados:', proyectosInstructor.length);
             
             // Llenar select de proyectos en el modal
             const select = document.getElementById('entregable-proyecto-instructor');
@@ -35,12 +31,18 @@ function cargarProyectosInstructor() {
                     option.textContent = proyecto.nombre;
                     select.appendChild(option);
                 });
+                console.log('Select de proyectos actualizado');
+            } else {
+                console.error('No se encontró el select de proyectos');
             }
             
             cargarTrimestres();
             cargarEntregables();
         })
-        .catch(error => console.error('Error cargando proyectos:', error));
+        .catch(error => {
+            console.error('Error cargando proyectos:', error);
+            alert('Error al cargar proyectos: ' + error.message);
+        });
 }
 
 // ============================================================
@@ -48,24 +50,34 @@ function cargarProyectosInstructor() {
 // ============================================================
 
 function cargarTrimestres() {
+    console.log('Cargando trimestres...');
     fetch('/api/trimestres')
         .then(response => response.json())
         .then(data => {
             trimestresLista = data;
+            console.log('Trimestres cargados:', trimestresLista.length);
             
             // Llenar select de trimestres en el modal
             const select = document.getElementById('entregable-trimestre-instructor');
             if (select) {
                 select.innerHTML = '<option value="">Selecciona un trimestre</option>';
+                
+                // Mostrar todos los trimestres disponibles
                 trimestresLista.forEach(trimestre => {
                     const option = document.createElement('option');
                     option.value = trimestre.id;
-                    option.textContent = trimestre.nombre || `Trimestre ${trimestre.numero}`;
+                    option.textContent = `Trimestre ${trimestre.numero}`;
                     select.appendChild(option);
                 });
+                console.log('Select de trimestres actualizado');
+            } else {
+                console.error('No se encontró el select de trimestres');
             }
         })
-        .catch(error => console.error('Error cargando trimestres:', error));
+        .catch(error => {
+            console.error('Error cargando trimestres:', error);
+            alert('Error al cargar trimestres: ' + error.message);
+        });
 }
 
 // ============================================================
@@ -142,10 +154,31 @@ function subirEntregableInstructor(event) {
     const descripcion = document.getElementById('entregable-descripcion-instructor')?.value;
     const archivo = document.getElementById('entregable-archivo-instructor')?.files[0];
     
+    console.log('Subiendo entregable...');
+    console.log('Proyecto ID:', proyectoId);
+    console.log('Trimestre ID:', trimestreId);
+    console.log('Nombre:', nombre);
+    console.log('Hay archivo:', !!archivo);
+    if (archivo) {
+        console.log('Tamaño del archivo:', (archivo.size / 1024 / 1024).toFixed(2) + ' MB');
+    }
+    
     if (!proyectoId || !nombre || !trimestreId) {
         alert('Por favor completa proyecto, trimestre y nombre');
         return;
     }
+    
+    // Validar tamaño del archivo (máximo 50MB)
+    if (archivo) {
+        const maxSize = 50 * 1024 * 1024; // 50 MB
+        if (archivo.size > maxSize) {
+            alert(`El archivo es demasiado grande (${(archivo.size / 1024 / 1024).toFixed(2)} MB). El tamaño máximo permitido es 50 MB.\n\nPor favor, comprime el archivo o usa una versión más pequeña.`);
+            return;
+        }
+    }
+    
+    // Obtener token JWT
+    const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     
     const nuevoEntregable = {
         nombre: nombre,
@@ -163,52 +196,69 @@ function subirEntregableInstructor(event) {
         formData.append('trimestreId', trimestreId);
         formData.append('archivo', archivo);
         
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         fetch('/api/entregables', {
             method: 'POST',
+            headers: headers,
             body: formData
         })
         .then(response => {
+            console.log('Response status:', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
-                    throw new Error(text || 'Error al subir archivo');
+                    console.error('Error response:', text);
+                    throw new Error(text || `Error ${response.status}: Error al subir archivo`);
                 });
             }
             return response.json();
         })
         .then(data => {
+            console.log('Entregable subido:', data);
             alert('Entregable subido exitosamente');
             closeModal('modal-subir-entregable-instructor');
             document.getElementById('form-subir-entregable-instructor').reset();
             cargarEntregables();
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error completo:', error);
             alert('Error al subir archivo: ' + error.message);
         });
     } 
     // Sin archivo, enviar como JSON
     else {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         fetch('/api/entregables', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify(nuevoEntregable)
         })
         .then(response => {
+            console.log('Response status:', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
-                    throw new Error(text || 'Error al crear entregable');
+                    console.error('Error response:', text);
+                    throw new Error(text || `Error ${response.status}: Error al crear entregable`);
                 });
             }
             return response.json();
         })
         .then(data => {
+            console.log('Entregable creado:', data);
             alert('Entregable creado exitosamente');
             closeModal('modal-subir-entregable-instructor');
             document.getElementById('form-subir-entregable-instructor').reset();
             cargarEntregables();
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error completo:', error);
             alert('Error al crear entregable: ' + error.message);
         });
     }
@@ -242,5 +292,12 @@ function eliminarEntregableInstructor(entregableId) {
 // ============================================================
 
 function initEntregablesInstructor() {
+    console.log('Inicializando entregables del instructor...');
     cargarProyectosInstructor();
 }
+
+// Ejecutar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando entregables...');
+    initEntregablesInstructor();
+});

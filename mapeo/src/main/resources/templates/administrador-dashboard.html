@@ -87,27 +87,28 @@
         </div>
 
         <div class="main-content">
-            <!-- Header -->
-            <div class="header">
-                <div class="search-box">
-                    <input type="text" id="global-search" placeholder="Buscar en todo...">
-                </div>
-                <div class="header-actions">
-                    <button class="btn-icon" onclick="toggleTheme()" title="Tema">
-                        <span class="icon">🌗</span>
-                    </button>
-                    <div class="user-profile-header" style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openModal('modal-editar-foto-perfil')" title="Editar foto de perfil">
-                        <div id="user-avatar-container" class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #FF9800; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; overflow: hidden; transition: all 0.3s;">
-                            <img id="user-avatar-img" src="" alt="Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                            <span id="user-initials">?</span>
-                        </div>
-                        <span id="user-name" class="user-name">Usuario</span>
-                    </div>
-                    <button class="btn-action btn-danger" onclick="logout()" title="Cerrar sesión">
-                        CERRAR SESIÓN
-                    </button>
-                </div>
-            </div>
+             <!-- Header -->
+             <div class="header">
+                 <div class="search-box">
+                     <input type="text" id="global-search" placeholder="Buscar en todo...">
+                 </div>
+                 <img src="/img/logo_sena.png" alt="Logo SENA" style="height: 50px; object-fit: contain; margin: 0 15px;">
+                 <div class="header-actions">
+                     <button class="btn-icon" onclick="toggleTheme()" title="Tema">
+                         <span class="icon">🌗</span>
+                     </button>
+                     <div class="user-profile-header" style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openModal('modal-editar-foto-perfil')" title="Editar foto de perfil">
+                         <div id="user-avatar-container" class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #FF9800; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; overflow: hidden; transition: all 0.3s;">
+                             <img id="user-avatar-img" src="" alt="Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                             <span id="user-initials">?</span>
+                         </div>
+                         <span id="user-name" class="user-name">Usuario</span>
+                     </div>
+                     <button class="btn-action btn-danger" onclick="logout()" title="Cerrar sesión">
+                         CERRAR SESIÓN
+                     </button>
+                 </div>
+             </div>
 
             <!-- Panel de Notificaciones -->
             <div id="notification-panel" class="notification-panel">
@@ -212,6 +213,17 @@
                 <button class="btn-primary" onclick="llenarSelectUsuariosAprendices(); llenarSelectFichasAprendices(); openModal('modal-crear-aprendiz')">
                     Nuevo Aprendiz
                 </button>
+                <div class="filters">
+                    <input type="text" id="aprendices-search" placeholder="Buscar por nombre de usuario...">
+                    <select id="aprendices-ficha-filter">
+                        <option value="">Todas las fichas</option>
+                    </select>
+                    <select id="aprendices-estado-filter">
+                        <option value="">Todos los estados</option>
+                        <option value="ACTIVO">Activo</option>
+                        <option value="INACTIVO">Inactivo</option>
+                    </select>
+                </div>
                 <div id="aprendices-list" class="table-container">
                     <table class="table">
                         <thead>
@@ -405,11 +417,11 @@
                     <button class="btn-primary" style="background-color: #388e3c; color: white;" onclick="descargarReporteUsuariosExcel()">📊 Descargar Excel</button>
                 </div>
                 <div class="filters">
-                    <input type="text" id="usuarios-search" placeholder="Buscar usuario...">
-                    <select id="usuarios-rol-filter">
+                    <input type="text" id="reporte-usuarios-search" placeholder="Buscar usuario...">
+                    <select id="reporte-usuarios-rol-filter">
                         <option value="">Todos los roles</option>
                     </select>
-                    <select id="usuarios-estado-filter">
+                    <select id="reporte-usuarios-estado-filter">
                         <option value="">Todos los estados</option>
                         <option value="ACTIVO">Activo</option>
                         <option value="INACTIVO">Inactivo</option>
@@ -569,8 +581,20 @@
                     <option value="PA">Pasaporte</option>
                 </select>
                 
-                <label>Número Documento *</label>
-                <input type="number" id="usuario-numero-documento" required>
+                <label>Número Documento (8-10 dígitos) *</label>
+                <div style="position: relative;">
+                    <input type="text" id="usuario-numero-documento" placeholder="1234567890" required minlength="8" maxlength="10" pattern="\d{8,10}" title="Debe contener entre 8 y 10 dígitos" oninput="validateDocumentoNumber()" style="padding-right: 35px;">
+                    <button type="button" id="docStatusBtn" class="doc-status-btn doc-status-invalid" disabled title="Ingresa entre 8 y 10 dígitos">
+                        ✗
+                    </button>
+                </div>
+                <small id="docErrorMsg" style="color: #dc3545; display: none; margin-top: 5px;"></small>
+                
+                <label>Contraseña *</label>
+                <input type="password" id="usuario-contrasena" placeholder="Mínimo 8 caracteres" minlength="8" required>
+                
+                <label>Confirmar Contraseña *</label>
+                <input type="password" id="usuario-contrasena-confirmacion" placeholder="Confirmar contraseña" minlength="8" required>
                 
                 <label>Rol *</label>
                 <select id="usuario-rol" required>
@@ -621,8 +645,14 @@
                     <option value="PA">Pasaporte</option>
                 </select>
                 
-                <label>Número Documento *</label>
-                <input type="number" id="usuario-numero-documento-edit" required>
+                <label>Número Documento (8-10 dígitos) *</label>
+                <div style="position: relative;">
+                    <input type="text" id="usuario-numero-documento-edit" placeholder="1234567890" required minlength="8" maxlength="10" pattern="\d{8,10}" title="Debe contener entre 8 y 10 dígitos" oninput="validateDocumentoNumberEdit()" style="padding-right: 35px;">
+                    <button type="button" id="docStatusBtnEdit" class="doc-status-btn doc-status-invalid" disabled title="Ingresa entre 8 y 10 dígitos">
+                        ✗
+                    </button>
+                </div>
+                <small id="docErrorMsgEdit" style="color: #dc3545; display: none; margin-top: 5px;"></small>
                 
                 <label>Rol *</label>
                 <select id="usuario-rol-edit" required>
@@ -661,6 +691,13 @@
                 <label>Ficha (opcional - puede asignarse después)</label>
                 <select id="aprendiz-ficha">
                     <option value="">Dejar vacío para asignar después</option>
+                </select>
+                
+                <label>Nivel de Formación *</label>
+                <select id="aprendiz-nivel" required>
+                    <option value="">Seleccione nivel</option>
+                    <option value="TECNICO">Técnico</option>
+                    <option value="TECNOLOGO">Tecnólogo</option>
                 </select>
                 
                 <div class="modal-actions">
@@ -732,6 +769,13 @@
                     <option value="PRESENCIAL">Presencial</option>
                     <option value="VIRTUAL">Virtual</option>
                     <option value="HIBRIDA">Híbrida</option>
+                </select>
+                
+                <label>Nivel de Formación *</label>
+                <select id="ficha-nivel" required>
+                    <option value="">Seleccione</option>
+                    <option value="TECNICO">Técnico</option>
+                    <option value="TECNOLOGO">Tecnólogo</option>
                 </select>
                 
                 <label>Fecha Inicio *</label>
@@ -930,12 +974,6 @@
                     <option value="2">Trimestre 2</option>
                     <option value="3">Trimestre 3</option>
                     <option value="4">Trimestre 4</option>
-                    <option value="5">Trimestre 5</option>
-                    <option value="6">Trimestre 6</option>
-                    <option value="7">Trimestre 7</option>
-                    <option value="8">Trimestre 8</option>
-                    <option value="9">Trimestre 9</option>
-                    <option value="10">Trimestre 10</option>
                 </select>
                 
                 <label>Ficha *</label>
@@ -984,12 +1022,6 @@
                     <option value="2">Trimestre 2</option>
                     <option value="3">Trimestre 3</option>
                     <option value="4">Trimestre 4</option>
-                    <option value="5">Trimestre 5</option>
-                    <option value="6">Trimestre 6</option>
-                    <option value="7">Trimestre 7</option>
-                    <option value="8">Trimestre 8</option>
-                    <option value="9">Trimestre 9</option>
-                    <option value="10">Trimestre 10</option>
                 </select>
                 
                 <label>Ficha *</label>
@@ -1284,5 +1316,107 @@
     <script src="/js/roles-crud.js"></script>
     <script src="/js/aprendiz-crud.js"></script>
     <script src="/js/instructores-crud.js"></script>
+
+    <style>
+        .doc-status-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: not-allowed;
+            transition: all 0.3s ease;
+            background: #f0f0f0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .doc-status-invalid {
+            background: #dc3545 !important;
+            color: #fff !important;
+            border-color: #c82333 !important;
+        }
+        
+        .doc-status-valid {
+            background: #28a745 !important;
+            color: #fff !important;
+            border-color: #1e7e34 !important;
+            cursor: default !important;
+        }
+    </style>
+
+    <script>
+        function validateDocumentoNumber() {
+            const numeroDocumento = document.getElementById('usuario-numero-documento').value;
+            const docErrorMsg = document.getElementById('docErrorMsg');
+            const docStatusBtn = document.getElementById('docStatusBtn');
+            
+            // Solo permitir dígitos
+            const soloDigitos = numeroDocumento.replace(/\D/g, '');
+            document.getElementById('usuario-numero-documento').value = soloDigitos;
+            
+            if (soloDigitos.length < 8) {
+                docErrorMsg.textContent = 'Mínimo 8 dígitos requeridos';
+                docErrorMsg.style.display = 'block';
+                docStatusBtn.textContent = '✗';
+                docStatusBtn.classList.remove('doc-status-valid');
+                docStatusBtn.classList.add('doc-status-invalid');
+                docStatusBtn.title = 'Número de documento inválido (mínimo 8 dígitos)';
+            } else if (soloDigitos.length > 10) {
+                docErrorMsg.textContent = 'Máximo 10 dígitos permitidos';
+                docErrorMsg.style.display = 'block';
+                docStatusBtn.textContent = '✗';
+                docStatusBtn.classList.remove('doc-status-valid');
+                docStatusBtn.classList.add('doc-status-invalid');
+                docStatusBtn.title = 'Número de documento inválido (máximo 10 dígitos)';
+            } else {
+                docErrorMsg.style.display = 'none';
+                docStatusBtn.textContent = '✓';
+                docStatusBtn.classList.remove('doc-status-invalid');
+                docStatusBtn.classList.add('doc-status-valid');
+                docStatusBtn.title = 'Número de documento válido';
+            }
+        }
+
+        function validateDocumentoNumberEdit() {
+            const numeroDocumento = document.getElementById('usuario-numero-documento-edit').value;
+            const docErrorMsg = document.getElementById('docErrorMsgEdit');
+            const docStatusBtn = document.getElementById('docStatusBtnEdit');
+            
+            // Solo permitir dígitos
+            const soloDigitos = numeroDocumento.replace(/\D/g, '');
+            document.getElementById('usuario-numero-documento-edit').value = soloDigitos;
+            
+            if (soloDigitos.length < 8) {
+                docErrorMsg.textContent = 'Mínimo 8 dígitos requeridos';
+                docErrorMsg.style.display = 'block';
+                docStatusBtn.textContent = '✗';
+                docStatusBtn.classList.remove('doc-status-valid');
+                docStatusBtn.classList.add('doc-status-invalid');
+                docStatusBtn.title = 'Número de documento inválido (mínimo 8 dígitos)';
+            } else if (soloDigitos.length > 10) {
+                docErrorMsg.textContent = 'Máximo 10 dígitos permitidos';
+                docErrorMsg.style.display = 'block';
+                docStatusBtn.textContent = '✗';
+                docStatusBtn.classList.remove('doc-status-valid');
+                docStatusBtn.classList.add('doc-status-invalid');
+                docStatusBtn.title = 'Número de documento inválido (máximo 10 dígitos)';
+            } else {
+                docErrorMsg.style.display = 'none';
+                docStatusBtn.textContent = '✓';
+                docStatusBtn.classList.remove('doc-status-invalid');
+                docStatusBtn.classList.add('doc-status-valid');
+                docStatusBtn.title = 'Número de documento válido';
+            }
+        }
+    </script>
     </body>
     </html>

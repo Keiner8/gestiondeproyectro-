@@ -97,22 +97,22 @@ function setupFiltros() {
 }
 
 function aplicarFiltros() {
-    const searchTerm = document.getElementById('usuarios-search').value.toLowerCase();
-    const rolFilter = document.getElementById('usuarios-rol-filter').value;
-    const estadoFilter = document.getElementById('usuarios-estado-filter').value;
-    
-    let usuariosFiltrados = window.usuariosListaCompleta.filter(usuario => {
-        const matchNombre = usuario.nombre.toLowerCase().includes(searchTerm) || 
-                           usuario.apellido.toLowerCase().includes(searchTerm) ||
-                           usuario.correo.toLowerCase().includes(searchTerm);
-        const matchRol = !rolFilter || usuario.rol?.id == rolFilter;
-        const matchEstado = !estadoFilter || usuario.estado === estadoFilter;
-        
-        return matchNombre && matchRol && matchEstado;
-    });
-    
-    mostrarUsuarios(usuariosFiltrados);
-}
+     const searchTerm = document.getElementById('usuarios-search').value.toLowerCase();
+     const rolFilter = document.getElementById('usuarios-rol-filter').value;
+     const estadoFilter = document.getElementById('usuarios-estado-filter').value;
+     
+     let usuariosFiltrados = window.usuariosListaCompleta.filter(usuario => {
+         const matchNombre = usuario.nombre.toLowerCase().includes(searchTerm) || 
+                            usuario.apellido.toLowerCase().includes(searchTerm) ||
+                            usuario.correo.toLowerCase().includes(searchTerm);
+         const matchRol = !rolFilter || (usuario.rol && parseInt(usuario.rol.id) === parseInt(rolFilter));
+         const matchEstado = !estadoFilter || usuario.estado === estadoFilter;
+         
+         return matchNombre && matchRol && matchEstado;
+     });
+     
+     mostrarUsuarios(usuariosFiltrados);
+ }
 
 // ===== CREAR USUARIO =====
 function crearUsuario(event) {
@@ -125,14 +125,25 @@ function crearUsuario(event) {
     const numeroDocumento = document.getElementById('usuario-numero-documento').value;
     const rolId = document.getElementById('usuario-rol').value;
     const estado = document.getElementById('usuario-estado').value;
+    const password = document.getElementById('usuario-contrasena').value;
+    const passwordConfirmacion = document.getElementById('usuario-contrasena-confirmacion').value;
     
-    if (!nombre || !apellido || !correo || !numeroDocumento || !rolId) {
+    if (!nombre || !apellido || !correo || !numeroDocumento || !rolId || !password) {
         mostrarNotificacion('Por favor completa todos los campos obligatorios', 'warning');
         return;
     }
     
-    // Generar contraseña automática
-    const password = generarContraseña();
+    // Validar que las contraseñas coincidan
+    if (password !== passwordConfirmacion) {
+        mostrarNotificacion('Las contraseñas no coinciden', 'warning');
+        return;
+    }
+    
+    // Validar longitud mínima de contraseña
+    if (password.length < 8) {
+        mostrarNotificacion('La contraseña debe tener al menos 8 caracteres', 'warning');
+        return;
+    }
     
     const usuarioNuevo = {
         nombre: nombre,

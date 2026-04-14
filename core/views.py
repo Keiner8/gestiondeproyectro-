@@ -1247,6 +1247,7 @@ def aprendices_carga_masiva(request):
     ficha_id = data.get('fichaId')
     ficha = get_fk(Ficha, ficha_id)
 
+    # La carga masiva siempre necesita una ficha destino valida.
     if ficha is None:
         return JsonResponse({'detail': 'Debes seleccionar una ficha valida'}, status=400)
 
@@ -1254,6 +1255,7 @@ def aprendices_carga_masiva(request):
     if not isinstance(aprendices_json, list) or len(aprendices_json) == 0:
         return JsonResponse({'detail': 'El JSON debe incluir una lista de aprendices'}, status=400)
 
+    # Antes de procesar, se valida que la ficha no supere el limite de 30 aprendices.
     actuales = Aprendiz.objects.filter(ficha_id=ficha.id).count()
     if actuales + len(aprendices_json) > 30:
         cupos_disponibles = max(30 - actuales, 0)
@@ -1272,6 +1274,7 @@ def aprendices_carga_masiva(request):
     documentos_en_json = set()
     aprendices_normalizados = []
 
+    # Aqui se valida fila por fila el JSON recibido antes de guardar algo en la base de datos.
     for index, aprendiz in enumerate(aprendices_json, start=1):
         if not isinstance(aprendiz, dict):
             errores.append({'fila': index, 'mensaje': 'Cada aprendiz debe ser un objeto JSON valido'})
@@ -1334,6 +1337,7 @@ def aprendices_carga_masiva(request):
             }
         )
 
+    # Si existe cualquier error, no se guarda ningun aprendiz.
     if errores:
         return JsonResponse(
             {
@@ -1348,6 +1352,7 @@ def aprendices_carga_masiva(request):
     rol_aprendiz = Rol.objects.filter(nombre_rol__iexact='aprendiz').first() or get_object_or_404(Rol, id=3)
     creados = []
 
+    # La creacion se hace dentro de una transaccion para que todo quede consistente.
     with transaction.atomic():
         for aprendiz in aprendices_normalizados:
             usuario = Usuario.objects.create(
@@ -1396,6 +1401,7 @@ def instructores_carga_masiva(request):
     ficha_id = data.get('fichaId')
     ficha = get_fk(Ficha, ficha_id)
 
+    # La carga masiva siempre necesita una ficha destino valida.
     if ficha is None:
         return JsonResponse({'detail': 'Debes seleccionar una ficha valida'}, status=400)
 
@@ -1408,6 +1414,7 @@ def instructores_carga_masiva(request):
     documentos_en_json = set()
     instructores_normalizados = []
 
+    # Aqui se valida fila por fila el JSON recibido antes de guardar algo en la base de datos.
     for index, instructor in enumerate(instructores_json, start=1):
         if not isinstance(instructor, dict):
             errores.append({'fila': index, 'mensaje': 'Cada instructor debe ser un objeto JSON valido'})
@@ -1463,6 +1470,7 @@ def instructores_carga_masiva(request):
             }
         )
 
+    # Si existe cualquier error, no se guarda ningun instructor.
     if errores:
         return JsonResponse(
             {
@@ -1477,6 +1485,7 @@ def instructores_carga_masiva(request):
     rol_instructor = Rol.objects.filter(nombre_rol__iexact='instructor').first() or get_object_or_404(Rol, id=2)
     creados = []
 
+    # La creacion se hace dentro de una transaccion para que todo quede consistente.
     with transaction.atomic():
         for instructor in instructores_normalizados:
             usuario = Usuario.objects.create(

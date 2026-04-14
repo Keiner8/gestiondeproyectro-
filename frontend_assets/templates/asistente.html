@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente IA - Admin</title>
+    <link rel="stylesheet" href="/css/administrador-dashboard.css">
+    <script src="/js/api-utils.js"></script>
+    <script src="/js/app-init.js"></script>
+</head>
+<body>
+    <div class="main-content" style="padding: 40px;">
+        <h1>Asistente IA del Administrador</h1>
+        <p style="color: #666; margin-bottom: 20px;">
+            Escribe cualquier pregunta en texto y Gemini te responde.
+        </p>
+
+        <form id="asistente-form" class="card" style="padding: 20px; max-width: 900px;">
+            <div class="form-group">
+                <label for="texto">Pregunta *</label>
+                <textarea id="texto" name="texto" rows="8" placeholder="Ej: Como organizo los aprendices por ficha?" required></textarea>
+            </div>
+
+            <div class="modal-actions" style="justify-content: flex-start; margin-top: 15px;">
+                <button type="submit" class="btn-primary">Preguntar a la IA</button>
+                <button type="button" class="btn-secondary" onclick="window.location.href='/dashboard/administrador'">Volver</button>
+            </div>
+        </form>
+
+        <div id="asistente-error" class="card" style="padding: 15px; margin-top: 20px; border-left: 5px solid #991b1b; display: none;">
+            <strong style="color: #991b1b;">Error:</strong> <span id="asistente-error-text"></span>
+        </div>
+
+        {% if error %}
+        <div class="card" style="padding: 15px; margin-top: 20px; border-left: 5px solid #991b1b;">
+            <strong style="color: #991b1b;">Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        {% if respuesta %}
+        <div class="card" style="padding: 20px; margin-top: 20px;">
+            <label>Respuesta</label>
+            <textarea rows="16" readonly style="min-height: 260px;">{{ respuesta }}</textarea>
+            <div class="modal-actions" style="justify-content: flex-start; margin-top: 12px;">
+                <button type="button" class="btn-secondary" onclick="copiarRespuestaAsistente()">Copiar respuesta</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+        (function validarAdmin() {
+            const token = localStorage.getItem('jwtToken');
+            const rol = (localStorage.getItem('usuarioRol') || '').toLowerCase();
+            if (!token || rol !== 'administrador') {
+                window.location.href = '/login';
+            }
+        })();
+
+        (function conectarFormulario() {
+            const form = document.getElementById('asistente-form');
+            const campo = document.getElementById('texto');
+            const respuesta = document.querySelector('textarea[readonly]');
+            const boton = form ? form.querySelector('button[type="submit"]') : null;
+            const errorBox = document.getElementById('asistente-error');
+            const errorText = document.getElementById('asistente-error-text');
+            if (!form) return;
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const texto = (campo?.value || '').trim();
+                if (errorBox) errorBox.style.display = 'none';
+                if (!texto) {
+                    mostrarNotificacionGlobal('Debes escribir una pregunta', 'warning');
+                    return;
+                }
+
+                if (boton) {
+                    boton.disabled = true;
+                    boton.textContent = 'Consultando...';
+                }
+                try {
+                    const response = await fetchWithAuth('/asistente', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ texto }),
+                    });
+
+                    if (!response) {
+                        mostrarNotificacionGlobal('No se pudo consultar la IA', 'error');
+                        return;
+                    }
+
+                    let body = {};
+                    let rawText = '';
+                    try {
+                        body = await response.json();
+                    } catch (err) {
+                        rawText = await response.text().catch(() => '');
+                    }
+                    if (!response.ok) {
+                        const mensaje = body.detail || rawText || 'No se pudo consultar la IA';
+                        mostrarNotificacionGlobal(mensaje, 'error');
+                        if (errorBox && errorText) {
+                            errorText.textContent = mensaje;
+                            errorBox.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    let output = body.respuesta || '';
+                    if (!respuesta) {
+                        const caja = document.createElement('textarea');
+                        caja.rows = 16;
+                        caja.readOnly = true;
+                        caja.value = output;
+                        caja.style.marginTop = '20px';
+                        caja.style.minHeight = '260px';
+                        form.parentNode.appendChild(caja);
+                    } else {
+                        respuesta.value = output;
+                    }
+                    mostrarNotificacionGlobal('Respuesta generada por la IA', 'success');
+                } finally {
+                    if (boton) {
+                        boton.disabled = false;
+                        boton.textContent = 'Preguntar a la IA';
+                    }
+                }
+            });
+        })();
+
+        function copiarRespuestaAsistente() {
+            const respuesta = document.querySelector('textarea[readonly]');
+            if (!respuesta || !respuesta.value.trim()) {
+                mostrarNotificacionGlobal('No hay respuesta para copiar', 'warning');
+                return;
+            }
+
+            navigator.clipboard.writeText(respuesta.value)
+                .then(() => mostrarNotificacionGlobal('Respuesta copiada', 'success'))
+                .catch(() => mostrarNotificacionGlobal('No se pudo copiar la respuesta', 'error'));
+        }
+    </script>
+</body>
+</html>

@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Python / Django ###
+__pycache__/
+*.py[cod]
+*.sqlite3
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+django_mapeo/staticfiles/

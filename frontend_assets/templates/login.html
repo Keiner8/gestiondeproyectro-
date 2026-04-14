@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SENA Mapeo</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/img/2148430814.jpg') center/cover no-repeat fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: url('/img/logo_sena.png') center/contain no-repeat;
+            z-index: 1000;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+        }
+        .logo-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+        .title {
+            text-align: center;
+            color: Z#000;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #000;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .password-input-group { position: relative; }
+        .password-input-group input { padding-right: 45px; }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(102, 126, 234, 0.25);
+            background: rgba(102, 126, 234, 0.08);
+            cursor: pointer;
+            color: #667eea;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .toggle-password:hover {
+            background: rgba(102, 126, 234, 0.16);
+            box-shadow: 0 6px 14px rgba(102, 126, 234, 0.18);
+        }
+        .toggle-password svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0c0d0d 0%, #097b98 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .error-message, .success-message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error-message { background-color: #f8d7da; color: #721c24; }
+        .success-message { background-color: #d4edda; color: #155724; }
+        .spinner {
+            display: none;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        .link-row { margin-top: 12px; text-align: right; }
+        .text-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 2px;
+            background: transparent;
+            border: none;
+            color: #355070;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .text-link:hover {
+            transform: translateY(-1px);
+            color: #1f3f61;
+        }
+        .text-link::before {
+            content: '↺';
+            font-size: 16px;
+            line-height: 1;
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #000;
+            font-size: 16px;
+        }
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .gespro-alert-popup {
+            border-radius: 18px !important;
+            padding: 24px !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18) !important;
+        }
+        .gespro-alert-title {
+            font-size: 28px !important;
+            font-weight: 700 !important;
+            color: #355070 !important;
+        }
+        .gespro-alert-text {
+            font-size: 17px !important;
+            color: #4b5563 !important;
+        }
+        .gespro-alert-button {
+            background: #355070 !important;
+            border-radius: 10px !important;
+            padding: 10px 22px !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="/img/logo3.png" alt="Logo 3" class="logo-top-right">
+        <h1 class="title">Iniciar Sesion</h1>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="correo">Correo Electronico</label>
+                <input type="email" id="correo" name="correo" placeholder="correo@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contrasena</label>
+                <div class="password-input-group">
+                    <input type="password" id="password" name="password" placeholder="********" required>
+                    <button type="button" class="toggle-password" onclick="togglePassword('password', this)" aria-label="Mostrar contrasena">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 3l18 18"></path>
+                            <path d="M10.6 10.7a3 3 0 0 0 4.2 4.2"></path>
+                            <path d="M9.5 5.3A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-4 4.9"></path>
+                            <path d="M6.6 6.7C4 8.3 2 12 2 12s3.5 7 10 7a10.8 10.8 0 0 0 3-.4"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Ingresar
+                <span class="spinner" id="spinner"></span>
+            </button>
+
+            <div class="link-row">
+                <button type="button" class="text-link" onclick="goToForgotPassword()">¿Olvidaste tu contrasena?</button>
+            </div>
+
+            <p class="register-link">
+                No tienes cuenta? <a href="/register">Registrate</a>
+            </p>
+
+        </form>
+    </div>
+
+    <script>
+        function getEyeIcon(isVisible) {
+            if (!isVisible) {
+                return `
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 3l18 18"></path>
+                        <path d="M10.6 10.7a3 3 0 0 0 4.2 4.2"></path>
+                        <path d="M9.5 5.3A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-4 4.9"></path>
+                        <path d="M6.6 6.7C4 8.3 2 12 2 12s3.5 7 10 7a10.8 10.8 0 0 0 3-.4"></path>
+                    </svg>
+                `;
+            }
+
+            return `
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            `;
+        }
+
+        function mostrarMensaje(tipo, mensaje, titulo = '') {
+            if (window.Swal) {
+                return window.Swal.fire({
+                    title: titulo || (tipo === 'success' ? 'Listo' : tipo === 'error' ? 'Error' : 'Mensaje'),
+                    text: mensaje,
+                    icon: tipo,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#355070',
+                    customClass: {
+                        popup: 'gespro-alert-popup',
+                        title: 'gespro-alert-title',
+                        htmlContainer: 'gespro-alert-text',
+                        confirmButton: 'gespro-alert-button'
+                    }
+                });
+            }
+            return Promise.resolve();
+        }
+
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.innerHTML = getEyeIcon(true);
+                button.setAttribute('aria-label', 'Ocultar contrasena');
+            } else {
+                input.type = 'password';
+                button.innerHTML = getEyeIcon(false);
+                button.setAttribute('aria-label', 'Mostrar contrasena');
+            }
+        }
+
+        function goToForgotPassword() {
+            const correo = document.getElementById('correo').value.trim();
+            const query = correo ? ('?correo=' + encodeURIComponent(correo)) : '';
+            window.location.href = '/forgot-password' + query;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('usuarioId');
+            localStorage.removeItem('usuarioNombre');
+            localStorage.removeItem('usuarioRol');
+            document.cookie = 'jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        });
+
+        function guardarSesion(data) {
+            const expirationDate = new Date();
+            expirationDate.setTime(expirationDate.getTime() + (24 * 60 * 60 * 1000));
+            document.cookie = 'jwtToken=' + data.token + ';expires=' + expirationDate.toUTCString() + ';path=/';
+
+            localStorage.setItem('jwtToken', data.token);
+            localStorage.setItem('usuarioId', data.usuarioId);
+            localStorage.setItem('usuarioNombre', data.nombre);
+            localStorage.setItem('usuarioRol', data.rol);
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const correo = document.getElementById('correo').value;
+            const password = document.getElementById('password').value;
+            const spinner = document.getElementById('spinner');
+            const btnLogin = document.querySelector('.btn-login');
+
+            spinner.style.display = 'inline-block';
+            btnLogin.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo, password })
+                });
+
+                const raw = await response.text();
+                let payload = {};
+                try {
+                    payload = raw ? JSON.parse(raw) : {};
+                } catch (e) {
+                    payload = { message: raw };
+                }
+
+                if (!response.ok) {
+                    if (response.status === 403 && payload.requiresPasswordChange) {
+                        window.location.href = '/forgot-password?correo=' + encodeURIComponent(payload.correo || correo);
+                        return;
+                    }
+                    throw new Error(payload.detail || payload.message || raw);
+                }
+
+                const data = payload;
+                guardarSesion(data);
+                window.location.replace(data.dashboard);
+            } catch (error) {
+                await mostrarMensaje('error', 'Error al iniciar sesion: ' + error.message);
+            } finally {
+                spinner.style.display = 'none';
+                btnLogin.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
